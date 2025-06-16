@@ -1,0 +1,7 @@
+'use client'
+
+import { ConfirmDelivery } from '@/components/dashboard/pharmacy/ConfirmDelivery'
+
+export default function ConfirmDeliveryPage() {
+  return <ConfirmDelivery />
+} 
