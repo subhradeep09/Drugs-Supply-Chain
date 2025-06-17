@@ -1,58 +1,15 @@
-import { NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
-import connectDB from '@/lib/db/mongodb'
-import { User } from '@/lib/models/User'
+import { NextRequest, NextResponse } from 'next/server'
+import { mockUsers, addUser } from '../login/route'
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // Log the incoming request
-    console.log('Registration request received')
+    const { name, email, password, role } = await request.json()
 
-    // Parse request body
-    let body
-    try {
-      body = await req.json()
-    } catch (e) {
-      console.error('Error parsing request body:', e)
+    console.log('Registration attempt:', { name, email, role })
+
+    if (!name || !email || !password || !role) {
       return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 }
-      )
-    }
-
-    const { name, email, password, role, organization } = body
-
-    // Log the parsed data (excluding password)
-    console.log('Registration data:', { name, email, role, organization })
-
-    // Validate input
-    if (!name || !email || !password || !role || !organization) {
-      console.log('Missing required fields:', { 
-        hasName: !!name, 
-        hasEmail: !!email, 
-        hasPassword: !!password, 
-        hasRole: !!role, 
-        hasOrganization: !!organization 
-      })
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
+        { message: 'All fields are required' },
         { status: 400 }
       )
     }
@@ -61,104 +18,46 @@ export async function POST(req: Request) {
     const validRoles = ['ADMIN', 'HOSPITAL', 'PHARMACY', 'VENDOR']
     if (!validRoles.includes(role)) {
       return NextResponse.json(
-        { error: 'Invalid role' },
+        { message: 'Invalid role selected' },
         { status: 400 }
       )
     }
 
-    // Connect to database
-    try {
-      console.log('Connecting to database...')
-      await connectDB()
-      console.log('Database connected successfully')
-    } catch (error) {
-      console.error('Database connection error:', error)
-      return NextResponse.json(
-        { error: 'Database connection failed' },
-        { status: 500 }
-      )
-    }
-
     // Check if user already exists
-    try {
-      const existingUser = await User.findOne({ email })
-      if (existingUser) {
-        console.log('User already exists:', email)
-        return NextResponse.json(
-          { error: 'User already exists' },
-          { status: 400 }
-        )
-      }
-    } catch (error) {
-      console.error('Error checking existing user:', error)
+    const existingUser = mockUsers.find(u => u.email === email)
+    if (existingUser) {
       return NextResponse.json(
-        { error: 'Error checking existing user' },
-        { status: 500 }
+        { message: 'User already exists' },
+        { status: 409 }
       )
     }
 
-    // Hash password
-    let hashedPassword
-    try {
-      hashedPassword = await bcrypt.hash(password, 12)
-    } catch (error) {
-      console.error('Error hashing password:', error)
-      return NextResponse.json(
-        { error: 'Error processing password' },
-        { status: 500 }
-      )
+    // Create new user with plain text password (no hashing)
+    const newUser = {
+      id: (mockUsers.length + 1).toString(),
+      name,
+      email,
+      password: password, // Save as plain text
+      role,
     }
 
-    // Create user
-    let user
-    try {
-      user = await User.create({
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        organization,
-      })
-      console.log('User created successfully:', user._id)
-    } catch (error) {
-      console.error('Error creating user:', error)
-      return NextResponse.json(
-        { error: 'Error creating user' },
-        { status: 500 }
-      )
-    }
+    // Add to shared database
+    addUser(newUser)
+    
+    console.log('User registered successfully:', { email, role })
+    console.log('Total users in database:', mockUsers.length)
 
-    // Remove password from response
-    const userWithoutPassword = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      organization: user.organization,
-    }
+    const { password: _, ...userWithoutPassword } = newUser
 
-    return NextResponse.json(
-      { 
-        message: 'User registered successfully', 
-        user: userWithoutPassword 
-      },
-      { 
-        status: 201,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }
-    )
+    return NextResponse.json({
+      user: userWithoutPassword,
+      message: 'User registered successfully',
+    })
   } catch (error) {
-    console.error('Unexpected registration error:', error)
+    console.error('Registration error:', error)
     return NextResponse.json(
-      { error: 'An unexpected error occurred during registration' },
-      { 
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }
+      { message: 'Internal server error' },
+      { status: 500 }
     )
   }
 } 

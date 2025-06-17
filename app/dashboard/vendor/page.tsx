@@ -1,5 +1,7 @@
-import { VendorDashboard } from '@/components/dashboard/vendor/VendorDashboard/page'
+'use client'
 
-export default function VendorDashboardPage() {
-  return <VendorDashboard />
+import ManufacturerDashboardPage from './ManufacturerDashboard/page'
+
+export default function VendorPage() {
+  return <ManufacturerDashboardPage />
 } 

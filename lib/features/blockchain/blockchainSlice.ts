@@ -6,7 +6,7 @@ interface BlockchainState {
   signer: ethers.Signer | null
   address: string | null
   chainId: number | null
-  contract: ethers.Contract | null
+  contract: any | null
   loading: boolean
   error: string | null
 }
@@ -37,7 +37,7 @@ const blockchainSlice = createSlice({
     setChainId: (state, action: PayloadAction<number | null>) => {
       state.chainId = action.payload
     },
-    setContract: (state, action: PayloadAction<ethers.Contract | null>) => {
+    setContract: (state, action: PayloadAction<any | null>) => {
       state.contract = action.payload
     },
     setLoading: (state, action: PayloadAction<boolean>) => {

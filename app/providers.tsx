@@ -2,13 +2,14 @@
 
 import { Provider } from 'react-redux'
 import { store } from '@/lib/store'
-import { Toaster } from 'react-hot-toast'
+import { ThemeProvider } from '@/app/providers/ThemeProvider'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
-      {children}
-      <Toaster position="top-right" />
+      <ThemeProvider defaultTheme="light">
+        {children}
+      </ThemeProvider>
     </Provider>
   )
 } 

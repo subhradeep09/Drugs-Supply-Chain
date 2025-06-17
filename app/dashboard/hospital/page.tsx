@@ -1,5 +1,7 @@
-import { HospitalDashboard } from '@/components/dashboard/hospital/HospitalDashboard/page'
+'use client'
 
-export default function HospitalDashboardPage() {
-  return <HospitalDashboard />
+import HospitalDashboardPage from './HospitalDashboard/page'
+
+export default function HospitalPage() {
+  return <HospitalDashboardPage />
 } 

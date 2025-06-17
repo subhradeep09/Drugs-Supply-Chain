@@ -1,5 +1,7 @@
-import { PharmacyDashboard } from '@/components/dashboard/pharmacy/PharmacyDashboard/page'
+'use client'
 
-export default function PharmacyDashboardPage() {
-  return <PharmacyDashboard />
+import PharmacyDashboardPage from './PharmacyDashboard/page'
+
+export default function PharmacyPage() {
+  return <PharmacyDashboardPage />
 } 
