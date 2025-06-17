@@ -37,7 +37,7 @@ import {
 const adminSidebarItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard/admin',
     icon: LayoutDashboard,
   },
   {
@@ -52,12 +52,12 @@ const adminSidebarItems = [
   },
   {
     title: 'Supply Chain',
-    href: '/dashboard/admin/supply-chain',
+    href: '/dashboard/admin/supply-chain-tracker',
     icon: Truck,
   },
   {
     title: 'Inventory',
-    href: '/dashboard/admin/inventory',
+    href: '/dashboard/admin/inventory-overview',
     icon: Package,
   },
   {
@@ -72,17 +72,17 @@ const adminSidebarItems = [
   },
   {
     title: 'Analytics',
-    href: '/dashboard/admin/analytics',
+    href: '/dashboard/admin/reports-analytics',
     icon: BarChart,
   },
   {
     title: 'Smart Contracts',
-    href: '/dashboard/admin/smart-contracts',
+    href: '/dashboard/admin/smart-contract-logs',
     icon: FileCode,
   },
   {
     title: 'Performance',
-    href: '/dashboard/admin/performance',
+    href: '/dashboard/admin/performance-monitoring',
     icon: Activity,
   },
   {
@@ -100,7 +100,7 @@ const adminSidebarItems = [
 const hospitalSidebarItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard/hospital',
     icon: LayoutDashboard,
   },
   {
@@ -135,27 +135,27 @@ const hospitalSidebarItems = [
   },
   {
     title: 'Inventory',
-    href: '/dashboard/hospital/inventory',
+    href: '/dashboard/hospital/view-inventory',
     icon: Package,
   },
   {
     title: 'Dispense Drugs',
-    href: '/dashboard/hospital/dispense',
+    href: '/dashboard/hospital/dispense-drugs',
     icon: PackageCheck,
   },
   {
     title: 'Low Stock Alerts',
-    href: '/dashboard/hospital/low-stock',
+    href: '/dashboard/hospital/low-stock-alerts',
     icon: AlertCircle,
   },
   {
     title: 'Expiry Logs',
-    href: '/dashboard/hospital/expiry-logs',
+    href: '/dashboard/hospital/drug-expiry-logs',
     icon: FileWarning,
   },
   {
     title: 'Feedback & Support',
-    href: '/dashboard/hospital/feedback',
+    href: '/dashboard/hospital/feedback-support',
     icon: MessageSquare,
   },
   {
@@ -173,7 +173,7 @@ const hospitalSidebarItems = [
 const pharmacySidebarItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard/pharmacy',
     icon: LayoutDashboard,
   },
   {
@@ -231,18 +231,38 @@ const pharmacySidebarItems = [
 const vendorSidebarItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard/vendor',
     icon: LayoutDashboard,
   },
   {
-    title: 'Orders',
-    href: '/dashboard/vendor/orders',
+    title: 'Manufacturer Dashboard',
+    href: '/dashboard/vendor/manufacturer-dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Add Medicine',
+    href: '/dashboard/vendor/add-medicine',
+    icon: PlusCircle,
+  },
+  {
+    title: 'Received Orders',
+    href: '/dashboard/vendor/received-orders',
     icon: ShoppingCart,
   },
   {
-    title: 'Shipments',
-    href: '/dashboard/vendor/shipments',
+    title: 'Mark Dispatched',
+    href: '/dashboard/vendor/mark-dispatched',
+    icon: Send,
+  },
+  {
+    title: 'Dispatch Status',
+    href: '/dashboard/vendor/dispatch-status',
     icon: Truck,
+  },
+  {
+    title: 'Upload Invoice',
+    href: '/dashboard/vendor/upload-invoice',
+    icon: FileUp,
   },
   {
     title: 'Upload POD',
@@ -258,11 +278,6 @@ const vendorSidebarItems = [
     title: 'Shipment Logs',
     href: '/dashboard/vendor/shipment-logs',
     icon: FileText,
-  },
-  {
-    title: 'Settings',
-    href: '/dashboard/vendor/settings',
-    icon: Settings,
   },
 ]
 

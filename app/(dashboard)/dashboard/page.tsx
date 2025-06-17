@@ -2,10 +2,10 @@
 
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
-import { AdminDashboard } from '@/components/dashboard/admin/AdminDashboard'
-import { HospitalDashboard } from '@/components/dashboard/hospital/HospitalDashboard'
-import { PharmacyDashboard } from '@/components/dashboard/pharmacy/PharmacyDashboard'
-import { ManufacturerDashboard } from '@/components/dashboard/vendor/ManufacturerDashboard'
+import { AdminDashboard } from '@/components/dashboard/admin/AdminDashboard/page'
+import { HospitalDashboard } from '@/components/dashboard/hospital/HospitalDashboard/page'
+import { PharmacyDashboard } from '@/components/dashboard/pharmacy/PharmacyDashboard/page'
+import { ManufacturerDashboard } from '@/components/dashboard/vendor/ManufacturerDashboard/page'
 
 export default function DashboardPage() {
   const { user } = useSelector((state: RootState) => state.auth)
