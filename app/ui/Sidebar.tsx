@@ -87,12 +87,12 @@ const adminSidebarItems = [
   },
   {
     title: 'Notifications',
-    href: '/dashboard/admin/Notifications',
+    href: '/dashboard/admin/notifications',
     icon: Bell,
   },
   {
     title: 'Settings',
-    href: '/dashboard/admin/Settings',
+    href: '/dashboard/admin/settings',
     icon: Settings,
   },
 ]
@@ -229,11 +229,7 @@ const pharmacySidebarItems = [
 ]
 
 const vendorSidebarItems = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard/vendor',
-    icon: LayoutDashboard,
-  },
+  
   {
     title: 'Manufacturer Dashboard',
     href: '/dashboard/vendor/ManufacturerDashboard',
@@ -298,16 +294,17 @@ export function Sidebar() {
   }[user.role]
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-background">
+    <div className="flex h-full w-64 flex-col border-r" style={{ backgroundColor: '#CED5F8' }}>
+    
       <div className="flex h-14 items-center border-b px-4">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold" style={{  color: '#111111' }}  >
           {user.role === 'ADMIN' && 'Admin Portal'}
           {user.role === 'HOSPITAL' && 'Hospital Portal'}
           {user.role === 'PHARMACY' && 'Pharmacy Portal'}
           {user.role === 'VENDOR' && 'Vendor Portal'}
         </h2>
       </div>
-      <div className="flex-1 overflow-auto py-2">
+      <div className="flex-1 overflow-auto py-2 ">
         <nav className="grid gap-1 px-2">
           {sidebarItems.map((item) => {
             const Icon = item.icon
@@ -322,8 +319,8 @@ export function Sidebar() {
                     : 'text-muted-foreground'
                 )}
               >
-                <Icon className="h-4 w-4" />
-                {item.title}
+                <Icon className="h-4 w-4 " style={{ color: '#2D2D2D' }}/>
+                <span style={{ color: '#8F8F8F' }}>{item.title}</span>
               </button>
             )
           })}
