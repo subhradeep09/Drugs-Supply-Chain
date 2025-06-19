@@ -1,10 +1,16 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/ui/table'
 import { Badge } from '@/app/ui/badge'
 import { Button } from '@/app/ui/button'
 import { Input } from '@/app/ui/input'
+import { Bell, Settings, LogOut, TrendingUp, Package, CalendarCheck, ThumbsUp } from 'lucide-react'
+
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+
 
 const mockOrders = [
   {
@@ -45,151 +51,180 @@ const mockOrders = [
   },
 ]
 
+const userName = "Abir Paul";
+const userInitial = userName.charAt(0);
+
 export default function ManufacturerDashboardPage() {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [timeframe, setTimeframe] = useState('Monthly')
+  const dropdownRef = useRef()
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const revenueData = {
+    Monthly: { value: '$45,678', change: 12.5 },
+    Yearly: { value: '$512,000', change: 5.3 }
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Manufacturer Dashboard</h1>
-        <p className="text-muted-foreground">Manage your pharmaceutical manufacturing operations</p>
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 p-6 space-y-8">
+
+      {/* Top Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-900">Manufacturer Dashboard</h1>
+          <p className="text-gray-500 mt-1 text-sm">Manage your pharmaceutical manufacturing operations</p>
+        </div>
+
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setDropdownOpen(!dropdownOpen)} 
+            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold shadow hover:shadow-lg transition"
+          >
+            {userInitial}
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-3 w-48 bg-white border rounded-xl shadow-xl z-50">
+              <button className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 w-full text-left">
+                <Bell size={18} /> Notifications
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 w-full text-left">
+                <Settings size={18} /> Settings
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left">
+                <LogOut size={18} /> Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              Pending fulfillment
-            </p>
-          </CardContent>
-        </Card>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {[
+  { title: 'Active Orders', value: '12', subtitle: 'Pending fulfillment', icon: Package, bgColor: 'bg-blue-100' },
+  {
+    title: `${timeframe} Revenue`, // <-- This is now dynamic title
+    isRevenue: true,
+    icon: TrendingUp,
+    bgColor: revenueData[timeframe].change >= 0 ? 'bg-green-100' : 'bg-red-100',
+    value: revenueData[timeframe].value,
+    subtitle: `${revenueData[timeframe].change >= 0 ? '+' : ''}${revenueData[timeframe].change}% from last ${timeframe.toLowerCase()}`
+  },
+  { title: 'Production Rate', value: '95%', subtitle: 'On-time delivery', icon: CalendarCheck, bgColor: 'bg-yellow-100' },
+  { title: 'Quality Score', value: '4.8/5', subtitle: 'Customer satisfaction', icon: ThumbsUp, bgColor: 'bg-pink-100' },
+].map((stat, index) => {
+  const cardContent = (
+    <Card key={index} className={`${stat.bgColor} shadow-lg rounded-2xl hover:shadow-xl transition`}>
+      <CardHeader className="flex justify-between items-center">
+        <CardTitle className="text-sm text-gray-600 flex items-center">
+          {stat.title}
+        </CardTitle>
+        <stat.icon className="text-blue-500" size={22} />
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold text-blue-600">{stat.value}</div>
+        <p className="text-sm text-gray-400">{stat.subtitle}</p>
+      </CardContent>
+    </Card>
+  );
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,678</div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from last month
-            </p>
-          </CardContent>
-        </Card>
+  return stat.isRevenue ? (
+    <div key={index} onClick={() => setTimeframe(timeframe === 'Monthly' ? 'Yearly' : 'Monthly')} className="cursor-pointer">
+      {cardContent}
+    </div>
+  ) : cardContent;
+})}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Production Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">95%</div>
-            <p className="text-xs text-muted-foreground">
-              On-time delivery
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quality Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4.8/5</div>
-            <p className="text-xs text-muted-foreground">
-              Customer satisfaction
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="shadow-lg rounded-2xl"style={{ backgroundColor: '#EFE5E3', color: '#11111' }}>
           <CardHeader>
             <CardTitle>Production Status</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+          <CardContent className="space-y-4">
+            {[
+              { drug: 'Paracetamol 500mg', batch: 'BATCH123', status: 'In Production', badge: 'secondary' },
+              { drug: 'Amoxicillin 250mg', batch: 'BATCH124', status: 'Completed', badge: 'success' },
+              { drug: 'Ibuprofen 400mg', batch: 'BATCH125', status: 'Quality Check', badge: 'secondary' },
+            ].map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Paracetamol 500mg</p>
-                  <p className="text-sm text-muted-foreground">Batch #BATCH123</p>
+                  <p className="font-medium">{item.drug}</p>
+                  <p className="text-sm text-gray-400">Batch #{item.batch}</p>
                 </div>
-                <Badge variant="secondary">In Production</Badge>
+                <Badge variant={item.badge}>{item.status}</Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Amoxicillin 250mg</p>
-                  <p className="text-sm text-muted-foreground">Batch #BATCH124</p>
-                </div>
-                <Badge variant="success">Completed</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Ibuprofen 400mg</p>
-                  <p className="text-sm text-muted-foreground">Batch #BATCH125</p>
-                </div>
-                <Badge variant="secondary">Quality Check</Badge>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Raw Materials</p>
-                  <p className="text-sm text-muted-foreground">Available stock</p>
+       <Card className="shadow-lg rounded-2xl">
+         <CardHeader>
+          <CardTitle>Inventory Overview</CardTitle>
+         </CardHeader>
+         <CardContent>
+           <div className="flex justify-around flex-wrap gap-4">
+            {[
+              { label: 'Raw Materials', value: 25, subtitle: 'Available stock', color: '#3B82F6' },
+              { label: 'Finished Products', value: 1200, subtitle: 'Ready for shipping', color: '#22C55E' },
+              { label: 'Storage Capacity', value: 65, subtitle: 'Utilization', color: '#F59E0B' },
+             ].map((item, index) => (
+                 <div key={index} className="flex flex-col items-center justify-center space-y-2">
+                 <div className="w-24 h-24 flex items-center justify-center">
+                      {item.label === 'Finished Products' ? (
+                      <span className="text-2xl font-bold text-gray-700">{item.value}</span>
+                  ) : (       
+                   <CircularProgressbar
+                        value={item.value}
+                        text={`${item.value}%`}
+                        styles={buildStyles({
+                            textSize: '18px',
+                            pathColor: item.color,
+                            textColor: '#1F2937',
+                            trailColor: '#E5E7EB',
+                      })}
+                     />
+                  )}
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold">85%</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Finished Products</p>
-                  <p className="text-sm text-muted-foreground">Ready for shipping</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold">2,500</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Storage Capacity</p>
-                  <p className="text-sm text-muted-foreground">Utilization</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold">65%</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div className="text-center">
+                   <p className="font-medium">{item.label}</p>
+                   <p className="text-sm text-gray-400">{item.subtitle}</p>
 
-      <Card>
+                  {item.label === 'Raw Materials' && item.value < 20 && (
+                  <p className="text-sm text-red-600 font-semibold mt-1">⚠ Low Stock!</p>
+                  )}
+                </div>
+              </div>
+            ))}
+           </div>
+          </CardContent>
+         </Card>
+     </div>
+
+     
+      <Card className="shadow-lg rounded-2xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Recent Orders</CardTitle>
             <div className="flex space-x-2">
-              <Input
-                type="search"
-                placeholder="Search orders..."
-                className="w-[200px]"
-              />
-              <Button variant="outline" size="sm">
-                Export
-              </Button>
+              <Input type="search" placeholder="Search orders..." className="w-[200px]" />
+              <Button variant="outline" size="sm" className="hover:bg-blue-50">Export</Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -205,28 +240,24 @@ export default function ManufacturerDashboardPage() {
             </TableHeader>
             <TableBody>
               {mockOrders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id} className="hover:bg-blue-50">
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.hospital}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       {order.drugs.map((drug) => (
-                        <div key={drug.name} className="text-sm">
-                          {drug.name} ({drug.quantity})
-                        </div>
+                        <div key={drug.name} className="text-sm">{drug.name} ({drug.quantity})</div>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        order.status === 'shipped'
-                          ? 'success'
-                          : order.status === 'processing'
-                          ? 'secondary'
-                          : 'default'
-                      }
-                    >
+                    <Badge variant={
+                      order.status === 'shipped'
+                        ? 'success'
+                        : order.status === 'processing'
+                        ? 'secondary'
+                        : 'default'
+                    }>
                       {order.status}
                     </Badge>
                   </TableCell>
@@ -235,13 +266,9 @@ export default function ManufacturerDashboardPage() {
                   <TableCell>${order.totalValue}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
+                      <Button variant="outline" size="sm" className="hover:bg-blue-50">View</Button>
                       {order.status === 'pending' && (
-                        <Button variant="outline" size="sm">
-                          Process
-                        </Button>
+                        <Button variant="outline" size="sm" className="hover:bg-green-50">Process</Button>
                       )}
                     </div>
                   </TableCell>
@@ -251,6 +278,7 @@ export default function ManufacturerDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+
     </div>
   )
-} 
+}
