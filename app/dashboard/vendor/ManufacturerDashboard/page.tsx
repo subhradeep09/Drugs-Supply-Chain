@@ -7,7 +7,6 @@ import { Badge } from '@/app/ui/badge'
 import { Button } from '@/app/ui/button'
 import { Input } from '@/app/ui/input'
 import { Bell, Settings, LogOut, TrendingUp, Package, CalendarCheck, ThumbsUp } from 'lucide-react'
-
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 

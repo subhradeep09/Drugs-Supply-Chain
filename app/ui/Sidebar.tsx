@@ -87,12 +87,12 @@ const adminSidebarItems = [
   },
   {
     title: 'Notifications',
-    href: '/dashboard/admin/notifications',
+    href: '/dashboard/admin/Notifications',
     icon: Bell,
   },
   {
     title: 'Settings',
-    href: '/dashboard/admin/settings',
+    href: '/dashboard/admin/Settings',
     icon: Settings,
   },
 ]
