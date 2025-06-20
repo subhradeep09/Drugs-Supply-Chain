@@ -8,20 +8,30 @@ export default function ManufacturerOrdersPage() {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [orderTypeFilter, setOrderTypeFilter] = useState('All'); // NEW
 
   const fetchOrders = () => {
-    fetch('/api/orderh')
-      .then(res => res.json())
-      .then(data => {
-        setOrders(data);
-        setFilteredOrders(data);
+    Promise.all([
+      fetch('/api/orderh').then(res => res.json()),
+      fetch('/api/orderp').then(res => res.json())
+    ])
+      .then(([hospitalOrders, pharmacyOrders]) => {
+        const hospitalData = hospitalOrders.map(order => ({ ...order, orderType: 'Hospital' }));
+        const pharmacyData = pharmacyOrders.map(order => ({ ...order, orderType: 'Pharmacy' }));
+
+        const combined = [...hospitalData, ...pharmacyData];
+        setOrders(combined);
+        setFilteredOrders(combined);
       });
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  const updateStatus = async (orderId, status) => {
-    await fetch('/api/orderh/updateStatus', {
+  const updateStatus = async (orderId, status, orderType) => {
+    const apiPath = orderType === 'Hospital' ? '/api/orderh/updateStatus' : '/api/orderp/updateStatus';
+    await fetch(apiPath, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId, status })
@@ -32,11 +42,17 @@ export default function ManufacturerOrdersPage() {
   const handleSearchAndFilter = () => {
     let filtered = orders;
 
+    // Filter by order type
+    if (orderTypeFilter !== 'All') {
+      filtered = filtered.filter(order => order.orderType === orderTypeFilter);
+    }
+
     // Filter by search term
     if (searchTerm.trim() !== '') {
       filtered = filtered.filter(order =>
-        order.hospitalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+        (order.hospitalName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (order.pharmacyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (order.medicineName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
       );
     }
 
@@ -50,34 +66,43 @@ export default function ManufacturerOrdersPage() {
     setFilteredOrders(filtered);
   };
 
-  // Call filter every time search or filterStatus changes
   useEffect(() => {
     handleSearchAndFilter();
-  }, [searchTerm, filterStatus, orders]);
+  }, [searchTerm, filterStatus, orderTypeFilter, orders]);
 
   return (
     <div className="p-10">
       <h1 className="text-3xl mb-5 font-bold">Manufacturer - Received Orders</h1>
 
-      {/* Search and Filter Section */}
-      <div className="flex mb-5 gap-4">
+      {/* Filters */}
+      <div className="flex flex-wrap mb-5 gap-4">
         <input
           type="text"
-          placeholder="Search by Hospital or Medicine..."
+          placeholder="Search by Hospital / Pharmacy / Medicine..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="border rounded p-2 w-1/3"
+          className="border rounded p-2 w-64"
         />
 
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="border rounded p-2"
+          className="border rounded p-3"
         >
-          <option value="All">All</option>
+          <option value="All">All Statuses</option>
           <option value="Pending">Pending</option>
           <option value="Processing">Processing</option>
           <option value="Rejected">Rejected</option>
+        </select>
+
+        <select
+          value={orderTypeFilter}
+          onChange={(e) => setOrderTypeFilter(e.target.value)}
+          className="border rounded p-2"
+        >
+          <option value="All">All Type</option>
+          <option value="Hospital">Hospital</option>
+          <option value="Pharmacy">Pharmacy</option>
         </select>
       </div>
 
@@ -85,7 +110,8 @@ export default function ManufacturerOrdersPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Order ID</TableHead>
-            <TableHead>Hospital</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Hospital / Pharmacy</TableHead>
             <TableHead>Medicine</TableHead>
             <TableHead>Quantity</TableHead>
             <TableHead>Status</TableHead>
@@ -96,21 +122,22 @@ export default function ManufacturerOrdersPage() {
           {filteredOrders.map(order => (
             <TableRow key={order._id}>
               <TableCell>{order.orderId}</TableCell>
-              <TableCell>{order.hospitalName}</TableCell>
+              <TableCell>{order.orderType}</TableCell>
+              <TableCell>{order.hospitalName || order.pharmacyName}</TableCell>
               <TableCell>{order.medicineName}</TableCell>
               <TableCell>{order.quantity}</TableCell>
               <TableCell>{order.manufacturerStatus || "Pending"}</TableCell>
               <TableCell>
                 {(!order.manufacturerStatus || order.manufacturerStatus === "Pending") ? (
                   <>
-                    <button 
-                      onClick={() => updateStatus(order.orderId, "Processing")} 
+                    <button
+                      onClick={() => updateStatus(order.orderId, "Processing", order.orderType)}
                       className="bg-green-500 text-white px-3 py-1 mr-2 rounded"
                     >
                       Accept
                     </button>
-                    <button 
-                      onClick={() => updateStatus(order.orderId, "Rejected")} 
+                    <button
+                      onClick={() => updateStatus(order.orderId, "Rejected", order.orderType)}
                       className="bg-red-500 text-white px-3 py-1 rounded"
                     >
                       Reject
