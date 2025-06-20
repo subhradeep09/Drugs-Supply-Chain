@@ -57,3 +57,9 @@
     @apply bg-background text-foreground;
   }
 } 
+.input {
+  @apply border p-2 rounded w-full mb-3;
+}
+.textarea {
+  @apply border p-2 rounded w-full mb-3 h-24;
+}
