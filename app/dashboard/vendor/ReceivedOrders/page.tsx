@@ -1,221 +1,129 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/ui/table'
-import { Badge } from '@/app/ui/badge'
-import { Button } from '@/app/ui/button'
-import { Input } from '@/app/ui/input'
+import { useEffect, useState } from 'react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/app/ui/table';
 
-const receivedOrders = [
-  {
-    id: 'REC001',
-    supplier: 'ABC Pharma',
-    items: [
-      { name: 'Vitamin C 500mg', quantity: 300 },
-      { name: 'Cough Syrup 100ml', quantity: 150 },
-    ],
-    status: 'Pending',
-    receivedDate: '2024-06-18',
-    totalValue: 1200,
-  },
-  {
-    id: 'REC002',
-    supplier: 'Global Meds',
-    items: [
-      { name: 'Pain Relief Gel 50g', quantity: 500 },
-      { name: 'Antibiotic Cream', quantity: 200 },
-    ],
-    status: 'Processing',
-    receivedDate: '2024-06-17',
-    totalValue: 1800,
-  },
-  {
-    id: 'REC003',
-    supplier: 'MediCorp Supplies',
-    items: [
-      { name: 'Insulin 10ml', quantity: 100 },
-      { name: 'Bandages', quantity: 500 },
-    ],
-    status: 'Shipped',
-    receivedDate: '2024-06-16',
-    totalValue: 950,
-  },
-  {
-    id: 'REC001',
-    supplier: 'ABC Pharma',
-    items: [
-      { name: 'Vitamin C 500mg', quantity: 300 },
-      { name: 'Cough Syrup 100ml', quantity: 150 },
-    ],
-    status: 'Pending',
-    receivedDate: '2024-06-18',
-    totalValue: 1200,
-  },
-  {
-    id: 'REC002',
-    supplier: 'Global Meds',
-    items: [
-      { name: 'Pain Relief Gel 50g', quantity: 500 },
-      { name: 'Antibiotic Cream', quantity: 200 },
-    ],
-    status: 'Processing',
-    receivedDate: '2024-06-17',
-    totalValue: 1800,
-  },
-  {
-    id: 'REC003',
-    supplier: 'MediCorp Supplies',
-    items: [
-      { name: 'Insulin 10ml', quantity: 100 },
-      { name: 'Bandages', quantity: 500 },
-    ],
-    status: 'Shipped',
-    receivedDate: '2024-06-16',
-    totalValue: 950,
-  },
-  {
-    id: 'REC002',
-    supplier: 'Global Meds',
-    items: [
-      { name: 'Pain Relief Gel 50g', quantity: 500 },
-      { name: 'Antibiotic Cream', quantity: 200 },
-    ],
-    status: 'Processing',
-    receivedDate: '2024-06-17',
-    totalValue: 1800,
-  },
-  {
-    id: 'REC003',
-    supplier: 'MediCorp Supplies',
-    items: [
-      { name: 'Insulin 10ml', quantity: 100 },
-      { name: 'Bandages', quantity: 500 },
-    ],
-    status: 'Shipped',
-    receivedDate: '2024-06-16',
-    totalValue: 950,
-  },
-  {
-    id: 'REC003',
-    supplier: 'MediCorp Supplies',
-    items: [
-      { name: 'Insulin 10ml', quantity: 100 },
-      { name: 'Bandages', quantity: 500 },
-    ],
-    status: 'Shipped',
-    receivedDate: '2024-06-16',
-    totalValue: 950,
-  },
-]
+export default function ManufacturerOrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
 
-export default function ReceivedOrdersPage() {
-
-  const handleExport = () => {
-    const csvHeaders = [
-      'Order ID',
-      'Supplier',
-      'Items',
-      'Status',
-      'Received Date',
-      'Total Value'
-    ].join(',');
-
-    const csvRows = receivedOrders.map(order => {
-      const itemsString = order.items.map(item => `${item.name} (${item.quantity})`).join('; ');
-      return [
-        order.id,
-        order.supplier,
-        `"${itemsString}"`,
-        order.status,
-        order.receivedDate,
-        order.totalValue
-      ].join(',');
-    });
-
-    const csvContent = [csvHeaders, ...csvRows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'received_orders.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const fetchOrders = () => {
+    fetch('/api/orderh')
+      .then(res => res.json())
+      .then(data => {
+        setOrders(data);
+        setFilteredOrders(data);
+      });
   };
 
+  useEffect(() => { fetchOrders(); }, []);
+
+  const updateStatus = async (orderId, status) => {
+    await fetch('/api/orderh/updateStatus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, status })
+    });
+    fetchOrders();
+  };
+
+  const handleSearchAndFilter = () => {
+    let filtered = orders;
+
+    // Filter by search term
+    if (searchTerm.trim() !== '') {
+      filtered = filtered.filter(order =>
+        order.hospitalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by status
+    if (filterStatus !== 'All') {
+      filtered = filtered.filter(order =>
+        (order.manufacturerStatus || 'Pending') === filterStatus
+      );
+    }
+
+    setFilteredOrders(filtered);
+  };
+
+  // Call filter every time search or filterStatus changes
+  useEffect(() => {
+    handleSearchAndFilter();
+  }, [searchTerm, filterStatus, orders]);
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-white via-slate-50 to-blue-50 space-y-8">
-      <h1 className="text-4xl font-bold text-gray-900">Received Orders</h1>
+    <div className="p-10">
+      <h1 className="text-3xl mb-5 font-bold">Manufacturer - Received Orders</h1>
 
-      <Card className="shadow-lg rounded-2xl">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Received Orders</CardTitle>
-            <div className="flex space-x-2">
-              <Input type="search" placeholder="Search orders..." className="w-[200px]" />
-              <Button variant="outline" size="sm" className="hover:bg-blue-50" onClick={handleExport}>
-                Export
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+      {/* Search and Filter Section */}
+      <div className="flex mb-5 gap-4">
+        <input
+          type="text"
+          placeholder="Search by Hospital or Medicine..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border rounded p-2 w-1/3"
+        />
 
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Received Date</TableHead>
-                <TableHead>Total Value</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border rounded p-2"
+        >
+          <option value="All">All</option>
+          <option value="Pending">Pending</option>
+          <option value="Processing">Processing</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
 
-            <TableBody>
-              {receivedOrders.map((order, index) => (
-                <TableRow key={`${order.id}-${index}`} className="hover:bg-blue-50">
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.supplier}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {order.items.map((item) => (
-                        <div key={item.name} className="text-sm">
-                          {item.name} ({item.quantity})
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      order.status === 'Shipped'
-                        ? 'success' 
-                        : order.status === 'Pending'
-                        ? 'secondary'
-                        : 'default'
-                    }>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{order.receivedDate}</TableCell>
-                  <TableCell>${order.totalValue}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="hover:bg-blue-50">View</Button>
-                      {order.status === 'Processing' && (
-                        <Button variant="outline" size="sm" className="hover:bg-green-50">Inspect</Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Hospital</TableHead>
+            <TableHead>Medicine</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredOrders.map(order => (
+            <TableRow key={order._id}>
+              <TableCell>{order.orderId}</TableCell>
+              <TableCell>{order.hospitalName}</TableCell>
+              <TableCell>{order.medicineName}</TableCell>
+              <TableCell>{order.quantity}</TableCell>
+              <TableCell>{order.manufacturerStatus || "Pending"}</TableCell>
+              <TableCell>
+                {(!order.manufacturerStatus || order.manufacturerStatus === "Pending") ? (
+                  <>
+                    <button 
+                      onClick={() => updateStatus(order.orderId, "Processing")} 
+                      className="bg-green-500 text-white px-3 py-1 mr-2 rounded"
+                    >
+                      Accept
+                    </button>
+                    <button 
+                      onClick={() => updateStatus(order.orderId, "Rejected")} 
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : (
+                  <span className="font-semibold">{order.manufacturerStatus}</span>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
-  )
+  );
 }
