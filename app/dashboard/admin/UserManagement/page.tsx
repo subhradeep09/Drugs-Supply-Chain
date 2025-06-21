@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/ui/table'
 import { Badge } from '@/app/ui/badge'
 import { Button } from '@/app/ui/button'
+import { useEffect, useState } from 'react'
 
 const mockUsers = [
   {
@@ -40,9 +41,92 @@ const mockUsers = [
   },
 ]
 
+function PendingUsers() {
+  const [pending, setPending] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const fetchPending = async () => {
+    setLoading(true)
+    const res = await fetch('/api/admin/pending-users')
+    const data = await res.json()
+    setPending(data.users)
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchPending() }, [])
+
+  const handleAction = async (userId: string, action: 'APPROVE' | 'REJECT') => {
+    setActionLoading(userId + action)
+    await fetch('/api/admin/verify-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action }),
+    })
+    setActionLoading(null)
+    fetchPending()
+  }
+
+  if (loading) return <div className="p-4">Loading pending users...</div>
+  if (pending.length === 0) return <div className="p-4">No pending user requests.</div>
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-xl font-bold mb-2">Pending User Requests</h2>
+      <div className="overflow-x-auto rounded shadow bg-white">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-3 text-left">Name</th>
+              <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-left">Role</th>
+              <th className="p-3 text-left">Organization</th>
+              <th className="p-3 text-left">License</th>
+              <th className="p-3 text-left">Match Score</th>
+              <th className="p-3 text-left">Best Match</th>
+              <th className="p-3 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pending.map((user) => (
+              <tr key={user._id} className="border-b hover:bg-gray-50">
+                <td className="p-3">{user.name}</td>
+                <td className="p-3">{user.email}</td>
+                <td className="p-3">{user.role}</td>
+                <td className="p-3">{user.verificationDetails?.organization || '-'}</td>
+                <td className="p-3">{user.verificationDetails?.licenseNumber || '-'}</td>
+                <td className="p-3">{user.matchScore}/4</td>
+                <td className="p-3 text-xs">
+                  {user.bestMatch ? (
+                    <div>
+                      <div>Email: {user.bestMatch.email}</div>
+                      <div>License: {user.bestMatch.licenseNumber}</div>
+                      <div>Org: {user.bestMatch.organization}</div>
+                      <div>Role: {user.bestMatch.role}</div>
+                    </div>
+                  ) : 'No match'}
+                </td>
+                <td className="p-3 flex gap-2">
+                  <button className="btn-primary" disabled={actionLoading === user._id + 'APPROVE'} onClick={() => handleAction(user._id, 'APPROVE')}>Approve</button>
+                  <button className="btn-danger" disabled={actionLoading === user._id + 'REJECT'} onClick={() => handleAction(user._id, 'REJECT')}>Reject</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <style jsx>{`
+        .btn-primary { @apply bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition; }
+        .btn-danger { @apply bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition; }
+      `}</style>
+    </div>
+  )
+}
+
 export default function UserManagementPage() {
   return (
     <div className="space-y-6">
+      <PendingUsers />
       <div>
         <h1 className="text-3xl font-bold">User Management</h1>
         <p className="text-muted-foreground">

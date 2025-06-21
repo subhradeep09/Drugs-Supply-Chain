@@ -117,9 +117,19 @@ export async function POST(request: NextRequest) {
 
     const { password: _, ...userWithoutPassword } = user
 
+    // Ensure verification fields are present for all users
+    const u: any = user;
+    const userWithVerification = {
+      ...userWithoutPassword,
+      isVerified: u.isVerified ?? false,
+      verificationStatus: u.verificationStatus ?? 'PENDING',
+      verificationDetails: u.verificationDetails ?? {},
+      rejectionReason: u.rejectionReason ?? '',
+    }
+
     console.log('Login successful for user:', email)
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: userWithVerification,
       token,
     })
   } catch (error) {

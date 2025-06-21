@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/ui/card'
 import { Badge } from '@/app/ui/badge'
@@ -224,4 +224,4 @@ export default function NotificationsPage() {
       </Card>
     </div>
   )
-}
+} 

@@ -71,7 +71,11 @@ export default function LoginPage() {
         }
 
         dispatch(login(data.user))
-        router.push('/dashboard')
+        if (data.user.role !== 'ADMIN' && data.user.verificationStatus && data.user.verificationStatus !== 'APPROVED') {
+          router.push('/verification-details')
+        } else {
+          router.push('/dashboard')
+        }
       } else {
         setError(data.message || 'Login failed')
       }

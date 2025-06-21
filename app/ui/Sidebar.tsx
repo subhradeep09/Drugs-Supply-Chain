@@ -61,6 +61,11 @@ const adminSidebarItems = [
     icon: Package,
   },
   {
+    title: 'New User Requests',
+    href: '/dashboard/admin/NewUser',
+    icon: Users,
+  },
+  {
     title: 'User Management',
     href: '/dashboard/admin/UserManagement',
     icon: Users,

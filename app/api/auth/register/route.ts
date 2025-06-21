@@ -39,6 +39,10 @@ export async function POST(request: NextRequest) {
       email,
       password: password, // Save as plain text
       role,
+      isVerified: false,
+      verificationStatus: 'PENDING',
+      verificationDetails: {},
+      rejectionReason: '',
     }
 
     // Add to shared database
