@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
@@ -32,18 +33,38 @@ import {
   FileUp,
   FileSignature,
   FileCode,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Pill,
+  Syringe,
+  Factory,
+  FlaskConical,
+  ShieldCheck,
+  Network,
+  Gauge,
+  ClipboardCheck,
+  PackagePlus,
+  PackageMinus,
+  PackageX,
+  CalendarCheck,
+  CalendarClock,
+  ClipboardEdit,
+  ScanBarcode,
+  TestTube2 ,
+  Stethoscope
 } from 'lucide-react'
 
 const adminSidebarItems = [
   {
     title: 'Dashboard',
     href: '/dashboard/admin',
-    icon: LayoutDashboard,
+    icon: Gauge,
   },
   {
     title: 'Hospital Requests',
     href: '/dashboard/admin/HospitalRequests',
-    icon: ClipboardList,
+    icon: ClipboardCheck,
   },
   {
     title: 'Vendor Orders',
@@ -53,12 +74,17 @@ const adminSidebarItems = [
   {
     title: 'Supply Chain',
     href: '/dashboard/admin/SupplyChainTracker',
-    icon: Truck,
+    icon: Network,
   },
   {
     title: 'Inventory',
     href: '/dashboard/admin/InventoryOverview',
-    icon: Package,
+    icon: PackageCheck,
+  },
+  {
+    title: 'New User Requests',
+    href: '/dashboard/admin/NewUser',
+    icon: Users,
   },
   {
     title: 'User Management',
@@ -68,7 +94,7 @@ const adminSidebarItems = [
   {
     title: 'Drug Management',
     href: '/dashboard/admin/DrugManagement',
-    icon: PackageCheck,
+    icon: Pill,
   },
   {
     title: 'Analytics',
@@ -101,7 +127,7 @@ const hospitalSidebarItems = [
   {
     title: 'Dashboard',
     href: '/dashboard/hospital',
-    icon: LayoutDashboard,
+    icon: Gauge,
   },
   {
     title: 'Order Drugs',
@@ -136,12 +162,12 @@ const hospitalSidebarItems = [
   {
     title: 'Inventory',
     href: '/dashboard/hospital/ViewInventory',
-    icon: Package,
+    icon: Syringe,
   },
   {
     title: 'Dispense Drugs',
     href: '/dashboard/hospital/DispenseDrugs',
-    icon: PackageCheck,
+    icon: ClipboardEdit,
   },
   {
     title: 'Low Stock Alerts',
@@ -151,7 +177,7 @@ const hospitalSidebarItems = [
   {
     title: 'Expiry Logs',
     href: '/dashboard/hospital/DrugExpiryLogs',
-    icon: FileWarning,
+    icon: CalendarClock,
   },
   {
     title: 'Feedback & Support',
@@ -165,7 +191,7 @@ const hospitalSidebarItems = [
   },
   {
     title: 'Settings',
-      href: '/dashboard/hospital/Settings',
+    href: '/dashboard/hospital/Settings',
     icon: Settings,
   },
 ]
@@ -174,7 +200,7 @@ const pharmacySidebarItems = [
   {
     title: 'Dashboard',
     href: '/dashboard/pharmacy',
-    icon: LayoutDashboard,
+    icon: Gauge,
   },
   {
     title: 'Order Drugs',
@@ -229,16 +255,15 @@ const pharmacySidebarItems = [
 ]
 
 const vendorSidebarItems = [
-  
   {
     title: 'Manufacturer Dashboard',
     href: '/dashboard/vendor/ManufacturerDashboard',
-    icon: LayoutDashboard,
+    icon: Gauge,
   },
   {
     title: 'Add Medicine',
     href: '/dashboard/vendor/AddMedicine',
-    icon: PlusCircle,
+    icon: PackagePlus,
   },
   {
     title: 'Received Orders',
@@ -278,6 +303,7 @@ const vendorSidebarItems = [
 ]
 
 export function Sidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { user } = useSelector((state: RootState) => state.auth)
@@ -293,18 +319,44 @@ export function Sidebar() {
     VENDOR: vendorSidebarItems,
   }[user.role]
 
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed)
+  }
+
   return (
-    <div className="flex h-full w-64 flex-col border-r" style={{ backgroundColor: '#CED5F8' }}>
-    
+    <div 
+      className={cn(
+        "relative h-full flex flex-col border-r transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-64",
+        "bg-gradient-to-b from-indigo-50 to-blue-50"
+      )}
+    >
+      {/* Header */}
       <div className="flex h-14 items-center border-b px-4">
-        <h2 className="text-lg font-semibold" style={{  color: '#111111' }}  >
+        <h2 
+          className={cn(
+            "text-lg font-semibold whitespace-nowrap transition-all",
+            isCollapsed ? "opacity-0 w-0" : "opacity-100 w-full",
+            "text-indigo-800"
+          )}
+        >
           {user.role === 'ADMIN' && 'Admin Portal'}
           {user.role === 'HOSPITAL' && 'Hospital Portal'}
           {user.role === 'PHARMACY' && 'Pharmacy Portal'}
           {user.role === 'VENDOR' && 'Vendor Portal'}
         </h2>
+        {isCollapsed && (
+          <div className="flex items-center justify-center w-full">
+            {user.role === 'ADMIN' && <ShieldCheck className="h-6 w-6 text-indigo-600" />}
+            {user.role === 'HOSPITAL' && <Stethoscope className="h-6 w-6 text-indigo-600" />}
+            {user.role === 'PHARMACY' && <Pill className="h-6 w-6 text-indigo-600" />}
+            {user.role === 'VENDOR' && <Factory className="h-6 w-6 text-indigo-600" />}
+          </div>
+        )}
       </div>
-      <div className="flex-1 overflow-auto py-2 ">
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-auto py-4">
         <nav className="grid gap-1 px-2">
           {sidebarItems.map((item) => {
             const Icon = item.icon
@@ -313,30 +365,62 @@ export function Sidebar() {
                 key={item.href}
                 onClick={() => router.push(item.href)}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'hover:bg-indigo-100 hover:text-indigo-800',
                   pathname === item.href
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground'
+                    ? 'bg-indigo-100 text-indigo-800 font-semibold'
+                    : 'text-gray-600',
+                  isCollapsed ? 'justify-center' : 'justify-start'
                 )}
+                title={isCollapsed ? item.title : undefined}
               >
-                <Icon className="h-4 w-4 " style={{ color: '#2D2D2D' }}/>
-                <span style={{ color: '#8F8F8F' }}>{item.title}</span>
+                <Icon className={cn(
+                  "h-5 w-5 flex-shrink-0",
+                  pathname === item.href ? "text-indigo-600" : "text-gray-500"
+                )} />
+                {!isCollapsed && (
+                  <span className="whitespace-nowrap">{item.title}</span>
+                )}
               </button>
             )
           })}
         </nav>
       </div>
-      <div className="border-t p-4">
+
+      {/* User Profile */}
+      <div className={cn(
+        "border-t p-4 transition-all",
+        isCollapsed ? "px-2" : "px-4"
+      )}>
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <div className={cn(
+            "flex items-center justify-center rounded-full bg-indigo-100 text-indigo-800 font-medium flex-shrink-0",
+            isCollapsed ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm"
+          )}>
             {user.name?.[0]?.toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.role}</p>
-          </div>
+          {!isCollapsed && (
+            <div className="overflow-hidden">
+              <p className="text-sm font-medium truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate">{user.role}</p>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Toggle Button - Centered vertically */}
+      <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-10">
+        <button
+          onClick={toggleSidebar}
+          className="rounded-full border bg-white p-1 shadow-md hover:bg-gray-100 transition-colors"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4 text-indigo-600" />
+          ) : (
+            <ChevronLeft className="h-4 w-4 text-indigo-600" />
+          )}
+        </button>
       </div>
     </div>
   )
-} 
+}

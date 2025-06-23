@@ -1,61 +1,83 @@
 'use client';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/app/ui/table';
 
-const mockDeliveries = [
-  { orderId: 'PORD001', drug: 'Paracetamol 500mg', quantity: 60, status: 'Pending' },
-  { orderId: 'PORD002', drug: 'Amoxicillin 250mg', quantity: 30, status: 'Pending' },
-  { orderId: 'PORD003', drug: 'Ibuprofen 400mg', quantity: 45, status: 'Pending' },
-];
+export default function HospitalDeliveryPage() {
+  const [orders, setOrders] = useState([]);
 
-export default function ConfirmDeliveryPage() {
-  const [deliveries, setDeliveries] = useState(mockDeliveries);
-  const handleConfirm = (orderId: string) => {
-    setDeliveries((prev) =>
-      prev.map((d) =>
-        d.orderId === orderId ? { ...d, status: 'Confirmed' } : d
-      )
-    );
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = () => {
+    fetch('/api/orderp')
+      .then(res => res.json())
+      .then(data => {
+        // Filter only orders which are 'out for delivery'
+        const filtered = data.filter(order => order.manufacturerStatus === 'Out For Delivery');
+        setOrders(filtered);
+      });
   };
+
+  const handlePacketReceived = async (orderId) => {
+    try {
+      const res = await fetch(`/api/update-order-statusp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          newStatus: 'delivered'
+        }),
+      });
+
+      if (res.ok) {
+        alert('Status updated to Delivered');
+        fetchOrders(); // Refresh data
+      } else {
+        alert('Failed to update status');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error while updating status');
+    }
+  };
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Confirm Delivery</h1>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">Drug</th>
-              <th className="p-3 text-left">Quantity</th>
-              <th className="p-3 text-left">Status</th>
-              <th className="p-3 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {deliveries.length === 0 ? (
-              <tr><td colSpan={5} className="text-center p-6">No pending deliveries.</td></tr>
-            ) : deliveries.map((d) => (
-              <tr key={d.orderId} className="border-b hover:bg-gray-50">
-                <td className="p-3">{d.orderId}</td>
-                <td className="p-3">{d.drug}</td>
-                <td className="p-3">{d.quantity}</td>
-                <td className="p-3">{d.status}</td>
-                <td className="p-3">
-                  {d.status === 'Pending' ? (
-                    <button className="btn-primary" onClick={() => handleConfirm(d.orderId)}>
-                      Confirm
-                    </button>
-                  ) : (
-                    <span className="text-green-600 font-semibold">Confirmed</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <style jsx>{`
-        .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition; }
-      `}</style>
+    <div className="p-10">
+      <h1 className="text-3xl mb-5 font-bold">Out for Delivery Orders</h1>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Medicine</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Delivery Date</TableHead>
+            <TableHead>Manufacturer Status</TableHead>
+            <TableHead>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orders.map(order => (
+            <TableRow key={order._id}>
+              <TableCell>{order.orderId}</TableCell>
+              <TableCell>{order.medicineName}</TableCell>
+              <TableCell>{order.quantity}</TableCell>
+              <TableCell>₹{order.totalValue}</TableCell>
+              <TableCell>{order.deliveryDate}</TableCell>
+              <TableCell>{order.manufacturerStatus}</TableCell>
+              <TableCell>
+                <button 
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                  onClick={() => handlePacketReceived(order._id)}
+                >
+                  Packet Received
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-} 
+}

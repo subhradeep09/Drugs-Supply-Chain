@@ -102,81 +102,95 @@ export default function OrderPage() {
       </div>
 
       {selectedMedicine && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-3xl relative">
-            <button
-              onClick={() => setSelectedMedicine(null)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black"
-            >
-              ✕
-            </button>
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center px-4">
+    <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-4xl relative">
+      <button
+        onClick={() => setSelectedMedicine(null)}
+        className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold"
+      >
+        ×
+      </button>
 
-            <div className="flex gap-6">
-              <div>
-                <img
-                  src={selectedMedicine.productImage || '/placeholder-medicine.jpg'}
-                  alt={selectedMedicine.brandName}
-                  className="w-48 h-48 object-contain bg-gray-100"
-                />
-              </div>
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Left: Product Image */}
+        <div className="flex-shrink-0">
+          <img
+            src={selectedMedicine.productImage || '/placeholder-medicine.jpg'}
+            alt={selectedMedicine.brandName}
+            className="w-72 h-72 object-contain rounded-xl bg-gray-100 border"
+          />
+        </div>
 
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-2">{selectedMedicine.brandName}</h2>
-                <p><b>Generic Name:</b> {selectedMedicine.genericName}</p>
-                <p><b>Category:</b> {selectedMedicine.category}</p>
-                <p><b>Dosage Form:</b> {selectedMedicine.dosageForm}</p>
-                <p><b>Strength:</b> {selectedMedicine.strength}</p>
-                <p><b>Pack Size:</b> {selectedMedicine.packSize}</p>
-                <p><b>License No:</b> {selectedMedicine.licenseNumber}</p>
-                <p><b>Batch No:</b> {selectedMedicine.batchNumber}</p>
-                <p><b>Expiry Date:</b> {selectedMedicine.expiryDate?.slice(0, 10)}</p>
-                <p><b>Mfg Date:</b> {selectedMedicine.manufacturingDate?.slice(0, 10)}</p>
-                <p><b>MRP:</b> ₹{selectedMedicine.mrp}</p>
-                <p><b>Offer:</b> ₹{selectedMedicine.offerPrice}</p>
-                <p><b>Stock:</b> {selectedMedicine.stockQuantity}</p>
-                <p><b>Storage:</b> {selectedMedicine.storageConditions}</p>
-              </div>
-            </div>
+        {/* Right: Details */}
+        <div className="flex-1 space-y-3">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">{selectedMedicine.brandName}</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <p><span className="font-semibold">Generic Name:</span> {selectedMedicine.genericName}</p>
+            <p><span className="font-semibold">Category:</span> {selectedMedicine.category}</p>
+            <p><span className="font-semibold">Dosage Form:</span> {selectedMedicine.dosageForm}</p>
+            <p><span className="font-semibold">Strength:</span> {selectedMedicine.strength}</p>
+            <p><span className="font-semibold">Pack Size:</span> {selectedMedicine.packSize}</p>
+            <p><span className="font-semibold">License No:</span> {selectedMedicine.licenseNumber}</p>
+            <p><span className="font-semibold">Batch No:</span> {selectedMedicine.batchNumber}</p>
+            <p><span className="font-semibold">Mfg Date:</span> {selectedMedicine.manufacturingDate?.slice(0,10)}</p>
+            <p><span className="font-semibold">Expiry Date:</span> {selectedMedicine.expiryDate?.slice(0,10)}</p>
+            <p><span className="font-semibold">Storage:</span> {selectedMedicine.storageConditions}</p>
+            <p><span className="font-semibold">Stock:</span> {selectedMedicine.stockQuantity}</p>
+          </div>
 
-            <div className="mt-6">
-              <div className="mb-3">
-                <label className="block mb-1 font-medium">Hospital Name:</label>
-                <input
-                  type="text"
-                  value={hospitalName}
-                  onChange={(e) => setHospitalName(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium">Delivery Date:</label>
-                <input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium">Quantity:</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-
-              <button
-                onClick={handlePlaceOrder}
-                className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700"
-              >
-                Place Order
-              </button>
-            </div>
+          <div className="mt-4">
+            <p className="text-lg"><span className="font-semibold">MRP:</span> ₹{selectedMedicine.mrp}</p>
+            <p className="text-lg text-green-600"><span className="font-semibold">Offer:</span> ₹{selectedMedicine.offerPrice}</p>
+            <p className="text-sm text-green-700">
+              Save ₹{selectedMedicine.mrp - selectedMedicine.offerPrice} ({Math.round(((selectedMedicine.mrp - selectedMedicine.offerPrice) / selectedMedicine.mrp) * 100)}% OFF)
+            </p>
           </div>
         </div>
+      </div>
+
+      {/* Form Section */}
+      <div className="mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block mb-1 font-medium">Hospital Name:</label>
+            <input
+              type="text"
+              value={hospitalName}
+              onChange={(e) => setHospitalName(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Delivery Date:</label>
+            <input
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Quantity:</label>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handlePlaceOrder}
+          className="mt-6 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 text-lg font-semibold"
+        >
+          Place Order
+        </button>
+      </div>
+    </div>
+  </div>
+
       )}
     </div>
   );
