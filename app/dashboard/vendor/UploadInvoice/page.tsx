@@ -1,71 +1,93 @@
 'use client';
-import React, { useState } from 'react';
 
-const mockInvoices = [
-  { orderId: 'VORD001', file: 'invoice1.pdf', date: '2024-06-01' },
-  { orderId: 'VORD002', file: 'invoice2.pdf', date: '2024-06-03' },
-];
+import { useEffect, useState } from 'react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/app/ui/table';
 
-export default function UploadInvoicePage() {
-  const [orderId, setOrderId] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [invoices, setInvoices] = useState(mockInvoices);
-  const [info, setInfo] = useState('');
+export default function InvoiceGeneratorPage() {
+  const [orders, setOrders] = useState([]);
 
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!orderId || !file) {
-      setInfo('Please select an order and a file.');
-      return;
-    }
-    setInvoices([
-      { orderId, file: file.name, date: new Date().toISOString().slice(0, 10) },
-      ...invoices,
-    ]);
-    setOrderId('');
-    setFile(null);
-    setInfo('Invoice uploaded!');
+  const fetchOrders = () => {
+    Promise.all([
+      fetch('/api/orderh').then(res => res.json()),
+      fetch('/api/orderp').then(res => res.json())
+    ])
+      .then(([hospitalOrders, pharmacyOrders]) => {
+        const hospitalData = hospitalOrders.map(order => ({ ...order, orderType: 'Hospital' }));
+        const pharmacyData = pharmacyOrders.map(order => ({ ...order, orderType: 'Pharmacy' }));
+        const combined = [...hospitalData, ...pharmacyData];
+        const acceptedOrders = combined.filter(order => order.manufacturerStatus === 'Processing');
+        setOrders(acceptedOrders);
+      });
   };
 
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleDownloadInvoice = async (order: any) => {
+  try {
+    const response = await fetch('/api/generate-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${order.orderId}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      console.error(await response.text());
+      alert("Failed to generate invoice");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error generating invoice");
+  }
+};
+
+
+
+
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Upload Invoice</h1>
-      <form onSubmit={handleUpload} className="bg-white rounded shadow p-6 mb-8">
-        <div className="mb-4">
-          <input className="input" type="text" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Order ID" required />
-        </div>
-        <div className="mb-4">
-          <input className="input" type="file" onChange={e => setFile(e.target.files?.[0] || null)} required />
-        </div>
-        <button className="btn-primary" type="submit">Upload</button>
-        {info && <div className="mt-4 text-green-600">{info}</div>}
-      </form>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">File</th>
-              <th className="p-3 text-left">Upload Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.length === 0 ? (
-              <tr><td colSpan={3} className="text-center p-6">No invoices uploaded.</td></tr>
-            ) : invoices.map((r, i) => (
-              <tr key={i} className="border-b hover:bg-gray-50">
-                <td className="p-3">{r.orderId}</td>
-                <td className="p-3">{r.file}</td>
-                <td className="p-3">{r.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-        .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition; }
-      `}</style>
+    <div className="p-10">
+      <h1 className="text-3xl mb-5 font-bold">Generate Invoice - Processing Orders</h1>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Hospital / Pharmacy</TableHead>
+            <TableHead>Medicine</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orders.map(order => (
+            <TableRow key={order._id}>
+              <TableCell>{order.orderId}</TableCell>
+              <TableCell>{order.orderType}</TableCell>
+              <TableCell>{order.hospitalName || order.pharmacyName}</TableCell>
+              <TableCell>{order.medicineName}</TableCell>
+              <TableCell>{order.quantity}</TableCell>
+              <TableCell>
+                <button
+                  onClick={() => handleDownloadInvoice(order)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
+                  Download Invoice
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
