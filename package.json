@@ -1,5 +1,5 @@
 {
-  "name": "delhi-drug-supply-chain",
+  "name": "Ayush Sampark",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,9 @@
     "test": "jest"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^5.9.1",
@@ -26,6 +29,7 @@
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/echarts": "^5.0.0",
     "@types/node": "^20.11.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.17",
@@ -34,6 +38,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",
+    "echarts": "^5.6.0",
     "ethers": "^6.14.4",
     "html5-qrcode": "^2.3.8",
     "ipfs-http-client": "^60.0.1",
