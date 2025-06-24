@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as echarts from 'echarts';
+import { signOut } from 'next-auth/react';
 
 const PharmacyDashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -260,9 +261,9 @@ const PharmacyDashboardPage = () => {
                     <a href="#help" className="block p-3 hover:bg-gray-50 text-sm">
                       <i className="fas fa-question-circle mr-2 text-gray-500"></i> Help Center
                     </a>
-                    <a href="#logout" className="block p-3 hover:bg-gray-50 text-sm border-t border-gray-100">
+                    <button href="#logout" className="block p-3 hover:bg-gray-50 text-sm border-t border-gray-100" onClick={() => signOut({ callbackUrl: '/sign-in' })}>
                       <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> Sign Out
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}

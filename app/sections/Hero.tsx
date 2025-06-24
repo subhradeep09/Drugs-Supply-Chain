@@ -21,7 +21,7 @@ export function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/sign-in')}
               className="text-lg px-8 py-3"
             >
               Get Started

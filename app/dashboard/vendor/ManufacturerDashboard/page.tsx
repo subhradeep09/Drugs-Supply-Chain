@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
+import { signOut } from 'next-auth/react';
 
 const ManufacturerDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -284,7 +285,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                 <div className="border-t border-gray-200"></div>
                 <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2 text-red-600">
                   <i className="fas fa-sign-out-alt"></i>
-                  <span className="text-sm">Logout</span>
+                  <button className="text-sm" onClick={() => signOut({ callbackUrl: '/sign-in' })}>Logout</button>
                 </div>
               </div>
             )}

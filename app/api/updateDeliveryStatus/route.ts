@@ -1,19 +1,31 @@
 import dbConnect from '@/lib/db/mongodborder';
-import DeliveryLocation from '@/lib/models/DeliveryLocation';
+import Order from '@/lib/models/orderh';
+import PharmacyOrder from '@/lib/models/orderp';
 
-export async function POST(req) {
+export async function POST(request) {
   await dbConnect();
-  const { orderId, address } = await req.json();
+  const body = await request.json();
+  const { orderId, orderType } = body;
 
-  let existing = await DeliveryLocation.findOne({ orderId });
+  let updatedOrder;
 
-  if (existing) {
-    existing.address = address;
-    existing.updatedAt = new Date();
-    await existing.save();
-  } else {
-    await DeliveryLocation.create({ orderId, address });
+  if (orderType === 'Hospital') {
+    updatedOrder = await Order.findOneAndUpdate(
+      { orderId },
+      { manufacturerStatus: 'Out For Delivery' },
+      { new: true }
+    );
+  } else if (orderType === 'Pharmacy') {
+    updatedOrder = await PharmacyOrder.findOneAndUpdate(
+      { orderId },
+      { manufacturerStatus: 'Out For Delivery' },
+      { new: true }
+    );
   }
 
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  if (!updatedOrder) {
+    return Response.json({ message: 'Order not found' }, { status: 404 });
+  }
+
+  return Response.json(updatedOrder, { status: 200 });
 }

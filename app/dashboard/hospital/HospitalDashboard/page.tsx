@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as echarts from 'echarts';
+import { signOut } from 'next-auth/react';
 
 const HospitalDashboardPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -260,9 +261,12 @@ const HospitalDashboardPage: React.FC = () => {
                     <a href="#help" className="block p-3 hover:bg-gray-50 text-sm">
                       <i className="fas fa-question-circle mr-2 text-gray-500"></i> Help Center
                     </a>
-                    <a href="#logout" className="block p-3 hover:bg-gray-50 text-sm border-t border-gray-100">
+                    <button
+                      className="w-full text-left p-3 hover:bg-gray-50 text-sm border-t border-gray-100 cursor-pointer"
+                      onClick={() => signOut({ callbackUrl: '/sign-in' })}
+                    >
                       <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> Sign Out
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}
@@ -433,11 +437,10 @@ const HospitalDashboardPage: React.FC = () => {
                       onClick={() => setShowUrgencyDropdown(!showUrgencyDropdown)}
                     >
                       <div className="flex items-center">
-                        <span className={`w-3 h-3 rounded-full mr-2 ${
-                          urgency === 'low' ? 'bg-green-500' :
-                          urgency === 'medium' ? 'bg-yellow-500' :
-                          'bg-red-500'
-                        }`}></span>
+                        <span className={`w-3 h-3 rounded-full mr-2 ${urgency === 'low' ? 'bg-green-500' :
+                            urgency === 'medium' ? 'bg-yellow-500' :
+                              'bg-red-500'
+                          }`}></span>
                         <span className="text-sm capitalize">{urgency}</span>
                       </div>
                       <i className="fas fa-chevron-down text-gray-400"></i>

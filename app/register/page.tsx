@@ -15,10 +15,11 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     role: 'HOSPITAL',
+    organization: '',
   })
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,18 +34,24 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          organization: formData.organization,
+        }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        router.push('/login?message=Registration successful')
+        router.push(`/verify-otp/${encodeURIComponent(formData.name)}`)
       } else {
         setError(data.message || 'Registration failed')
       }
@@ -100,6 +107,18 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
+                <label htmlFor="organization" className="text-sm font-medium">Organization</label>
+                <Input
+                  id="organization"
+                  name="organization"
+                  type="text"
+                  placeholder="Enter organization name"
+                  value={formData.organization}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <label htmlFor="role" className="text-sm font-medium">Role</label>
                 <select
                   id="role"
@@ -109,7 +128,7 @@ export default function RegisterPage() {
                   className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 >
-                  <option value="ADMIN">Admin</option>
+                  {/* Removed ADMIN */}
                   <option value="HOSPITAL">Hospital</option>
                   <option value="PHARMACY">Pharmacy</option>
                   <option value="VENDOR">Vendor</option>
@@ -148,7 +167,7 @@ export default function RegisterPage() {
             </form>
             <div className="mt-4 text-center text-sm">
               Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/sign-in" className="text-blue-600 hover:underline">
                 Sign in
               </Link>
             </div>
@@ -157,4 +176,4 @@ export default function RegisterPage() {
       </div>
     </div>
   )
-} 
+}

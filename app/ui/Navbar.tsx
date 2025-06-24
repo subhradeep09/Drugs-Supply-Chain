@@ -79,7 +79,7 @@ export function Navbar() {
 
   const handleLogout = () => {
     dispatch(logout())
-    router.push('/login')
+    router.push('/sign-in')
   }
 
   const filteredNavigation = isAuthenticated
@@ -175,7 +175,7 @@ export function Navbar() {
             ) : (
               <div className="flex items-center space-x-4">
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   Login
@@ -258,7 +258,7 @@ export function Navbar() {
             <div className="border-t border-border px-4 pb-3 pt-4">
               <div className="flex flex-col space-y-3">
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="block rounded-lg px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
                 >
                   Login
