@@ -60,7 +60,7 @@ export function UserProfileDropdown() {
 
   const handleLogout = () => {
     dispatch(logout())
-    router.push('/login')
+    router.push('/sign-in')
   }
 
   return (

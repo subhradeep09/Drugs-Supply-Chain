@@ -1,84 +1,151 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 
-export default function NewUserRequestsPage() {
-  const [pending, setPending] = useState<any[]>([]);
+interface Verification {
+  _id: string;
+  licenseNumber: string;
+  organization: string;
+  applicationStatus: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export default function NewApplicationsPage() {
+  const [applications, setApplications] = useState<Verification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
 
-  const fetchPending = async () => {
+  const fetchPendingApplications = async () => {
     setLoading(true);
-    setError('');
     try {
-      const res = await fetch('/api/admin/pending-users');
+      const res = await fetch(`/api/verification/pending?page=${page}&limit=5&search=${search}`);
       const data = await res.json();
-      setPending(data.users);
-    } catch (err) {
-      setError('Failed to fetch requests');
+      if (data.success) {
+        setApplications(data.data);
+        setTotal(data.total);
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => { fetchPending(); }, []);
+  useEffect(() => {
+    fetchPendingApplications();
+  }, [page, search]);
 
-  const handleAction = async (userId: string, action: 'APPROVE' | 'REJECT') => {
-    setActionLoading(userId + action);
-    await fetch('/api/admin/verify-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, action }),
-    });
-    setActionLoading(null);
-    fetchPending();
+  const handleAction = async (verificationId: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      const res = await fetch('/api/verification/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verificationId, status }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`Application ${status.toLowerCase()}!`);
+        fetchPendingApplications();
+      } else {
+        alert('Operation failed');
+      }
+    } catch (error) {
+      console.error('Error updating application:', error);
+    }
   };
+
+  const totalPages = Math.ceil(total / 5);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Incoming Verification Requests</h1>
+    <div className="p-10">
+      <h1 className="text-3xl mb-5 font-bold">Pending Applications</h1>
+
+      <div className="mb-5">
+        <input
+          type="text"
+          placeholder="Search by License No. or Organization"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="border p-2 w-1/2 rounded shadow"
+        />
+      </div>
+
       {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
-      ) : pending.length === 0 ? (
-        <div>No pending verification requests.</div>
+        <div className="text-center">Loading...</div>
+      ) : applications.length === 0 ? (
+        <div className="text-center">No pending applications</div>
       ) : (
-        <div className="overflow-x-auto rounded shadow bg-white">
-          <table className="min-w-full text-sm">
+        <>
+          <table className="w-full border border-gray-300 rounded overflow-hidden shadow">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-3 text-left">Name</th>
-                <th className="p-3 text-left">Email</th>
-                <th className="p-3 text-left">Role</th>
-                <th className="p-3 text-left">Organization</th>
-                <th className="p-3 text-left">License</th>
-                <th className="p-3 text-left">Submitted At</th>
-                <th className="p-3 text-left">Actions</th>
+                <th className="border p-3">Name</th>
+                <th className="border p-3">Email</th>
+                <th className="border p-3">License No</th>
+                <th className="border p-3">Organization</th>
+                <th className="border p-3">Submitted At</th>
+                <th className="border p-3">Action</th>
               </tr>
             </thead>
             <tbody>
-              {pending.map((user) => (
-                <tr key={user._id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{user.name}</td>
-                  <td className="p-3">{user.email}</td>
-                  <td className="p-3">{user.role}</td>
-                  <td className="p-3">{user.verificationDetails?.organization || '-'}</td>
-                  <td className="p-3">{user.verificationDetails?.licenseNumber || '-'}</td>
-                  <td className="p-3">{user.createdAt ? new Date(user.createdAt).toLocaleString() : '-'}</td>
-                  <td className="p-3 flex gap-2">
-                    <button className="btn-primary" disabled={actionLoading === user._id + 'APPROVE'} onClick={() => handleAction(user._id, 'APPROVE')}>Accept</button>
-                    <button className="btn-danger" disabled={actionLoading === user._id + 'REJECT'} onClick={() => handleAction(user._id, 'REJECT')}>Reject</button>
+              {applications.map(app => (
+                <tr key={app._id}>
+                  <td className="border p-3">{app.userId?.name || '-'}</td>
+                  <td className="border p-3">{app.userId?.email || '-'}</td>
+                  <td className="border p-3">{app.licenseNumber}</td>
+                  <td className="border p-3">{app.organization}</td>
+                  <td className="border p-3">{new Date(app.submittedAt).toLocaleString()}</td>
+                  <td className="border p-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAction(app._id, 'APPROVED')}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleAction(app._id, 'REJECTED')}
+                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      >
+                        Reject
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+
+          <div className="flex justify-between mt-5">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(prev => prev - 1)}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {page} of {totalPages}</span>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(prev => prev + 1)}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
-      <style jsx>{`
-        .btn-primary { @apply bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition; }
-        .btn-danger { @apply bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition; }
-      `}</style>
     </div>
   );
 }

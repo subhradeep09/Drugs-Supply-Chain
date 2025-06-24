@@ -6,6 +6,10 @@ export interface IUser extends Document {
   password: string
   role: 'ADMIN' | 'HOSPITAL' | 'PHARMACY' | 'VENDOR'
   organization: string
+  otp: String
+  otpExpiration: Date
+  isEmailVerified: boolean
+  isVerified: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -40,14 +44,26 @@ const userSchema = new Schema<IUser>(
       required: [true, 'Organization name is required'],
       trim: true,
     },
+    otp: {
+      type: String,
+      required: [true, 'Verify Code is required'],
+    },
+    otpExpiration: {
+      type: Date,
+      required: [true, 'Verify Code Expiry is required'],
+    },
+    isEmailVerified : {
+       type: Boolean, default: false 
+    },
+    isVerified: {
+       type: Boolean, default: false 
+    },
   },
   {
     timestamps: true,
   }
 )
 
-// Create indexes
-userSchema.index({ email: 1 }, { unique: true })
 
 // Delete the model if it exists to prevent OverwriteModelError
 export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema) 

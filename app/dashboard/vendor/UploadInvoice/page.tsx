@@ -15,7 +15,7 @@ export default function InvoiceGeneratorPage() {
         const hospitalData = hospitalOrders.map(order => ({ ...order, orderType: 'Hospital' }));
         const pharmacyData = pharmacyOrders.map(order => ({ ...order, orderType: 'Pharmacy' }));
         const combined = [...hospitalData, ...pharmacyData];
-        const acceptedOrders = combined.filter(order => order.manufacturerStatus === 'Processing');
+        const acceptedOrders = combined.filter(order => order.manufacturerStatus === 'delivered');
         setOrders(acceptedOrders);
       });
   };
