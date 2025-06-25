@@ -1,71 +1,125 @@
 'use client';
-import React, { useState } from 'react';
 
-const mockPODs = [
-  { orderId: 'VORD001', file: 'pod1.pdf', date: '2024-06-01' },
-  { orderId: 'VORD002', file: 'pod2.pdf', date: '2024-06-03' },
-];
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-export default function UploadPODPage() {
-  const [orderId, setOrderId] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [pods, setPODs] = useState(mockPODs);
-  const [info, setInfo] = useState('');
+interface PODType {
+  _id: string;
+  orderId: string;
+  hospitalName: string;
+  vendorId: string;
+  podUrl: string;
+  uploadedAt: string; // ISO string from MongoDB
+}
 
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!orderId || !file) {
-      setInfo('Please select an order and a file.');
-      return;
+export default function ManufacturerView() {
+  const [pods, setPods] = useState<PODType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  const fetchPods = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get('/api/get_pods');
+      setPods(res.data);
+    } catch (err) {
+      console.error('Failed to fetch PODs:', err);
+    } finally {
+      setLoading(false);
     }
-    setPODs([
-      { orderId, file: file.name, date: new Date().toISOString().slice(0, 10) },
-      ...pods,
-    ]);
-    setOrderId('');
-    setFile(null);
-    setInfo('POD uploaded!');
+  };
+
+  useEffect(() => {
+    fetchPods();
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // Update every 30s
+    return () => clearInterval(timer);
+  }, []);
+
+  const getRelativeTime = (uploadedAt: string) => {
+    const uploadedDate = new Date(uploadedAt);
+    const diff = Math.floor((now.getTime() - uploadedDate.getTime()) / 1000); // in seconds
+
+    let relative = '';
+    if (diff < 10) relative = 'Just now';
+    else if (diff < 60) relative = `${diff}s ago`;
+    else if (diff < 3600) relative = `${Math.floor(diff / 60)}m ago`;
+    else if (diff < 86400) relative = `${Math.floor(diff / 3600)}h ago`;
+    else relative = uploadedDate.toLocaleDateString();
+
+    const fullDateTime = uploadedDate.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return { relative, fullDateTime };
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Upload POD</h1>
-      <form onSubmit={handleUpload} className="bg-white rounded shadow p-6 mb-8">
-        <div className="mb-4">
-          <input className="input" type="text" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Order ID" required />
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            📦 Manufacturer: POD Receipts
+          </h2>
+          <button
+            onClick={fetchPods}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition disabled:bg-blue-300"
+          >
+            {loading ? 'Refreshing...' : '🔄 Refresh'}
+          </button>
         </div>
-        <div className="mb-4">
-          <input className="input" type="file" onChange={e => setFile(e.target.files?.[0] || null)} required />
-        </div>
-        <button className="btn-primary" type="submit">Upload</button>
-        {info && <div className="mt-4 text-green-600">{info}</div>}
-      </form>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">File</th>
-              <th className="p-3 text-left">Upload Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pods.length === 0 ? (
-              <tr><td colSpan={3} className="text-center p-6">No PODs uploaded.</td></tr>
-            ) : pods.map((r, i) => (
-              <tr key={i} className="border-b hover:bg-gray-50">
-                <td className="p-3">{r.orderId}</td>
-                <td className="p-3">{r.file}</td>
-                <td className="p-3">{r.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+        {pods.length === 0 ? (
+          <p className="text-gray-600">No PODs available.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto border border-gray-300 rounded-md">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Order ID</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Hospital</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Vendor</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Uploaded</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">POD File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pods.map((pod) => {
+                  const { relative, fullDateTime } = getRelativeTime(pod.uploadedAt);
+                  return (
+                    <tr key={pod._id} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-2 border-b">{pod.orderId}</td>
+                      <td className="px-4 py-2 border-b">{pod.hospitalName}</td>
+                      <td className="px-4 py-2 border-b">{pod.vendorId}</td>
+                      <td className="px-4 py-2 border-b text-sm text-gray-600">
+                        <div>{relative}</div>
+                        <div className="text-xs text-gray-500">{fullDateTime}</div>
+                      </td>
+                      <td className="px-4 py-2 border-b">
+                        <a
+                          href={pod.podUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          📄 View PDF
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-        .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition; }
-      `}</style>
     </div>
   );
 }
