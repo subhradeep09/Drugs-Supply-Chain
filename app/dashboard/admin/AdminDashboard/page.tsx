@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as echarts from 'echarts';
+import { signOut } from 'next-auth/react';
 
 const AdminDashboardPage: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -337,12 +338,13 @@ const AdminDashboardPage: React.FC = () => {
                   Help Center
                 </a>
                 <div className="border-t border-gray-100 my-1"></div>
-                <a
+                <button
                   href="#logout"
                   className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  onClick={() => signOut({ callbackUrl: '/sign-in' })}
                 >
                   Sign out
-                </a>
+                </button>
               </div>
             )}
           </div>
