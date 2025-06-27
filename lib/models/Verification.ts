@@ -1,53 +1,48 @@
-import mongoose, { Schema, Document } from 'mongoose'
+// lib/models/Verification.ts
+import mongoose, { Schema, Document, models } from 'mongoose'
 
 export interface IVerification extends Document {
   userId: mongoose.Types.ObjectId
+  fullName: string
+  email: string
+  phoneNumber: string
+  designation: string
   licenseNumber: string
+  licenseType: string
+  licenseIssuedBy: string
   organization: string
+  idProofUrl?: string
+  licenseCertificateUrl?: string
+  addressProofUrl?: string
   applicationStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   submittedAt: Date
-  reviewedAt?: Date
-  createdAt: Date
-  updatedAt: Date
 }
 
-const verificationSchema = new Schema<IVerification>(
+const VerificationSchema = new Schema<IVerification>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      unique: true, // One verification per user
-    },
-    licenseNumber: {
-      type: String,
-      required: [true, 'License number is required'],
-      trim: true,
-    },
-    organization: {
-      type: String,
-      required: [true, 'Organization is required'],
-      trim: true,
-    },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    fullName: { type: String, required: true },
+    email: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    designation: { type: String, required: true },
+    licenseNumber: { type: String, required: true },
+    licenseType: { type: String, required: true },
+    licenseIssuedBy: { type: String, required: true },
+    organization: { type: String, required: true },
+    idProofUrl: { type: String },
+    licenseCertificateUrl: { type: String },
+    addressProofUrl: { type: String },
     applicationStatus: {
       type: String,
       enum: ['PENDING', 'APPROVED', 'REJECTED'],
       default: 'PENDING',
     },
-    submittedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    reviewedAt: {
-      type: Date,
-    },
+    submittedAt: { type: Date, required: true },
   },
   {
-    timestamps: true, // Includes createdAt and updatedAt
+    timestamps: true, // adds createdAt and updatedAt
   }
 )
 
-// Delete the model if it exists to prevent OverwriteModelError in dev
 export const Verification =
-  mongoose.models?.Verification ||
-  mongoose.model<IVerification>('Verification', verificationSchema)
+  models.Verification || mongoose.model<IVerification>('Verification', VerificationSchema)

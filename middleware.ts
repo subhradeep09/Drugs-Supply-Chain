@@ -80,16 +80,18 @@ export async function middleware(request: NextRequest) {
 
   // 5️⃣ OTP verification cookie route
   const verifyOtpMatch = path.match(/^\/verify-otp\/([^/]+)$/);
-  if (verifyOtpMatch) {
+ if (verifyOtpMatch) {
     const justRegistered = request.cookies.get("just-registered")?.value;
-    const nameInPath = verifyOtpMatch[1];
 
-    if (!justRegistered || justRegistered !== nameInPath) {
+    const emailInPath = verifyOtpMatch[1];
+    const decodedemailInPath = decodeURIComponent(emailInPath);
+
+    if (!justRegistered || justRegistered !== decodedemailInPath) {
       return NextResponse.redirect(new URL("/register", request.url));
     }
 
     const response = NextResponse.next();
-    response.cookies.delete("just-registered");
+    // response.cookies.delete("just-registered");
     return response;
   }
 
@@ -104,7 +106,7 @@ export const config = {
     "/vendor/:path*",
     "/apply-verification/:path*",
     // "/application-status/:path*",
-    //"/verify-otp/:path*",
+    "/verify-otp/:path*",
     "/sign-in",
   ],
 };

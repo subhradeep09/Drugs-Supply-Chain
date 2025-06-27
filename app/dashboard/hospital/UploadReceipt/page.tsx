@@ -1,71 +1,198 @@
 'use client';
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+const SignaturePad = require('react-signature-canvas').default;
 
-const mockReceipts = [
-  { orderId: 'ORD001', file: 'receipt1.pdf', date: '2024-06-01' },
-  { orderId: 'ORD002', file: 'receipt2.pdf', date: '2024-06-03' },
-];
+interface OrderType {
+  _id: string;
+  orderId: string;
+  hospitalName: string;
+  manufacturerStatus: string;
+}
 
-export default function UploadReceiptPage() {
-  const [orderId, setOrderId] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [receipts, setReceipts] = useState(mockReceipts);
-  const [info, setInfo] = useState('');
+export default function UploadPOD() {
+  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
+  const podRef = useRef(null);
+  const [remarks, setRemarks] = useState('');
+  const [receiver, setReceiver] = useState('');
+  const [manufacturer, setManufacturer] = useState('');
+  const receiverSigRef = useRef<any>(null);
 
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!orderId || !file) {
-      setInfo('Please select an order and a file.');
+  useEffect(() => {
+    const fetchDeliveredOrders = async () => {
+      try {
+        const res = await axios.get('/api/delivered_orders');
+        setOrders(res.data);
+      } catch (error) {
+        console.error('Error fetching delivered orders:', error);
+      }
+    };
+    fetchDeliveredOrders();
+  }, []);
+
+  const handleUpload = async () => {
+    if (!selectedOrder || !receiver || !manufacturer) {
+      alert('Please fill all required fields.');
       return;
     }
-    setReceipts([
-      { orderId, file: file.name, date: new Date().toISOString().slice(0, 10) },
-      ...receipts,
-    ]);
-    setOrderId('');
-    setFile(null);
-    setInfo('Receipt uploaded!');
+
+    const canvas = await html2canvas(podRef.current!, {
+      scrollY: -window.scrollY,
+      backgroundColor: '#ffffff',
+      windowWidth: podRef.current!.scrollWidth,
+      height: podRef.current!.scrollHeight,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const aspectRatio = canvas.width / canvas.height;
+    const pdfWidth = pageWidth - 20;
+    const pdfHeight = pdfWidth / aspectRatio;
+
+    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+
+    const receiverSigURL = receiverSigRef.current?.getTrimmedCanvas().toDataURL('image/png');
+    if (receiverSigURL) {
+      pdf.addImage(receiverSigURL, 'PNG', 30, pdfHeight + 20, 60, 30);
+    }
+
+    const pdfBlob = pdf.output('blob');
+
+    const formData = new FormData();
+    formData.append('file', pdfBlob, `${selectedOrder.orderId}_pod.pdf`);
+    formData.append('orderId', selectedOrder.orderId);
+    formData.append('hospitalId', selectedOrder.hospitalName);
+    formData.append('vendorId', 'VEND001');
+
+    try {
+      setUploading(true);
+      await axios.post('/api/upload_pod', formData);
+      alert('✅ POD uploaded successfully!');
+      setSelectedOrder(null);
+      setRemarks('');
+      setReceiver('');
+      setManufacturer('');
+      receiverSigRef.current?.clear();
+    } catch (err: any) {
+      alert('❌ Upload error: ' + err.message);
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Upload Receipt</h1>
-      <form onSubmit={handleUpload} className="bg-white rounded shadow p-6 mb-8">
-        <div className="mb-4">
-          <input className="input" type="text" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Order ID" required />
-        </div>
-        <div className="mb-4">
-          <input className="input" type="file" onChange={e => setFile(e.target.files?.[0] || null)} required />
-        </div>
-        <button className="btn-primary" type="submit">Upload</button>
-        {info && <div className="mt-4 text-green-600">{info}</div>}
-      </form>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">File</th>
-              <th className="p-3 text-left">Upload Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {receipts.length === 0 ? (
-              <tr><td colSpan={3} className="text-center p-6">No receipts uploaded.</td></tr>
-            ) : receipts.map((r, i) => (
-              <tr key={i} className="border-b hover:bg-gray-50">
-                <td className="p-3">{r.orderId}</td>
-                <td className="p-3">{r.file}</td>
-                <td className="p-3">{r.date}</td>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-10 px-4">
+      <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          📦 Delivered Orders (POD Upload)
+        </h2>
+
+        <div className="overflow-x-auto rounded-lg border border-gray-300 shadow-sm">
+          <table className="min-w-full text-sm text-gray-700">
+            <thead className="bg-gray-100 text-xs uppercase font-semibold">
+              <tr>
+                <th className="p-3 text-left">Order ID</th>
+                <th className="p-3 text-left">Hospital</th>
+                <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order._id} className="border-t hover:bg-gray-50 transition">
+                  <td className="p-3">{order.orderId}</td>
+                  <td className="p-3">{order.hospitalName}</td>
+                  <td className="p-3 text-green-600 font-medium">{order.manufacturerStatus}</td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => setSelectedOrder(order)}
+                      className="text-blue-600 hover:underline text-sm font-semibold"
+                    >
+                      Generate POD
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {selectedOrder && (
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">
+              Selected Order: <span className="text-blue-700">{selectedOrder.orderId}</span> ({selectedOrder.hospitalName})
+            </h3>
+
+            <div ref={podRef} className="bg-white border p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-center mb-4">Proof of Delivery (POD)</h2>
+              <p><strong>Order ID:</strong> {selectedOrder.orderId}</p>
+              <p><strong>Hospital Name:</strong> {selectedOrder.hospitalName}</p>
+              <p><strong>Manufacturer Status:</strong> {selectedOrder.manufacturerStatus}</p>
+              <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+
+              <label className="block mt-4">
+                <strong>Remarks:</strong>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder="Any remarks..."
+                  className="w-full border mt-1 p-2"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div>
+                  <p><strong>Receiver (Hospital)</strong></p>
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    className="border w-full p-1 mt-1"
+                    value={receiver}
+                    onChange={(e) => setReceiver(e.target.value)}
+                  />
+                  <p className="mt-2">Signature:</p>
+                  <SignaturePad
+                    ref={receiverSigRef}
+                    canvasProps={{
+                      width: 250,
+                      height: 100,
+                      className: 'border rounded bg-white'
+                    }}
+                  />
+                </div>
+                <div>
+                  <p><strong>Manufacturer</strong></p>
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    className="border w-full p-1 mt-1"
+                    value={manufacturer}
+                    onChange={(e) => setManufacturer(e.target.value)}
+                  />
+                  <p className="mt-2">Signature: ___________________</p>
+                  <p>Date: __ / __ / ____</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleUpload}
+              disabled={uploading}
+              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-md transition disabled:bg-blue-300"
+            >
+              {uploading ? 'Uploading POD...' : '📤 Upload POD Form'}
+            </button>
+          </div>
+        )}
       </div>
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-        .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition; }
-      `}</style>
     </div>
   );
-} 
+}
