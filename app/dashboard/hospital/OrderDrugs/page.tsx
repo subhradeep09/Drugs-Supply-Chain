@@ -12,7 +12,7 @@ export default function OrderPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetch('/api/medicines')
+    fetch('/api/medicines/public')
       .then(res => res.json())
       .then(data => {
         setMedicines(data);

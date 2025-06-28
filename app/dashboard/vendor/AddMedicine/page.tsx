@@ -39,7 +39,7 @@ export default function AddMedicine() {
   const handleSubmit = async e => {
     e.preventDefault();
     console.log("Submitting form data:", form);
-    const res = await fetch('/api/medicines', {
+    const res = await fetch('/api/vendor-medicines', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)

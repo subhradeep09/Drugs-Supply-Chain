@@ -1,28 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/app/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/app/ui/table';
 
 export default function ManufacturerOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
-  const [orderTypeFilter, setOrderTypeFilter] = useState('All'); // NEW
+  const [orderTypeFilter, setOrderTypeFilter] = useState('All');
 
-  const fetchOrders = () => {
-    Promise.all([
-      fetch('/api/orderh').then(res => res.json()),
-      fetch('/api/orderp').then(res => res.json())
-    ])
-      .then(([hospitalOrders, pharmacyOrders]) => {
-        const hospitalData = hospitalOrders.map(order => ({ ...order, orderType: 'Hospital' }));
-        const pharmacyData = pharmacyOrders.map(order => ({ ...order, orderType: 'Pharmacy' }));
-
-        const combined = [...hospitalData, ...pharmacyData];
-        setOrders(combined);
-        setFilteredOrders(combined);
-      });
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/api/vendor-received-orders');
+      const data = await res.json();
+      setOrders(data);
+      setFilteredOrders(data);
+    } catch (error) {
+      console.error('Failed to fetch vendor orders:', error);
+    }
   };
 
   useEffect(() => {
@@ -30,36 +33,42 @@ export default function ManufacturerOrdersPage() {
   }, []);
 
   const updateStatus = async (orderId, status, orderType) => {
-    const apiPath = orderType === 'Hospital' ? '/api/orderh/updateStatus' : '/api/orderp/updateStatus';
+    const apiPath =
+      orderType === 'Hospital'
+        ? '/api/orderh/updateStatus'
+        : '/api/orderp/updateStatus';
+
     await fetch(apiPath, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, status })
+      body: JSON.stringify({ orderId, status }),
     });
-    fetchOrders();
+
+    fetchOrders(); // Re-fetch updated list
   };
 
   const handleSearchAndFilter = () => {
     let filtered = orders;
 
-    // Filter by order type
     if (orderTypeFilter !== 'All') {
-      filtered = filtered.filter(order => order.orderType === orderTypeFilter);
-    }
-
-    // Filter by search term
-    if (searchTerm.trim() !== '') {
-      filtered = filtered.filter(order =>
-        (order.hospitalName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (order.pharmacyName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (order.medicineName?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (order) => order.orderType === orderTypeFilter
       );
     }
 
-    // Filter by status
+    if (searchTerm.trim() !== '') {
+      filtered = filtered.filter((order) =>
+        `${order.hospitalName || order.pharmacyName || ''} ${
+          order.medicineName || ''
+        }`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      );
+    }
+
     if (filterStatus !== 'All') {
-      filtered = filtered.filter(order =>
-        (order.manufacturerStatus || 'Pending') === filterStatus
+      filtered = filtered.filter(
+        (order) => (order.manufacturerStatus || 'Pending') === filterStatus
       );
     }
 
@@ -72,7 +81,7 @@ export default function ManufacturerOrdersPage() {
 
   return (
     <div className="p-10">
-      <h1 className="text-3xl mb-5 font-bold">Manufacturer - Received Orders</h1>
+      <h1 className="text-3xl mb-5 font-bold">Vendor - Received Orders</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap mb-5 gap-4">
@@ -100,7 +109,7 @@ export default function ManufacturerOrdersPage() {
           onChange={(e) => setOrderTypeFilter(e.target.value)}
           className="border rounded p-2"
         >
-          <option value="All">All Type</option>
+          <option value="All">All Types</option>
           <option value="Hospital">Hospital</option>
           <option value="Pharmacy">Pharmacy</option>
         </select>
@@ -119,32 +128,39 @@ export default function ManufacturerOrdersPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredOrders.map(order => (
+          {filteredOrders.map((order) => (
             <TableRow key={order._id}>
               <TableCell>{order.orderId}</TableCell>
               <TableCell>{order.orderType}</TableCell>
               <TableCell>{order.hospitalName || order.pharmacyName}</TableCell>
               <TableCell>{order.medicineName}</TableCell>
               <TableCell>{order.quantity}</TableCell>
-              <TableCell>{order.manufacturerStatus || "Pending"}</TableCell>
+              <TableCell>{order.manufacturerStatus || 'Pending'}</TableCell>
               <TableCell>
-                {(!order.manufacturerStatus || order.manufacturerStatus === "Pending") ? (
+                {!order.manufacturerStatus ||
+                order.manufacturerStatus === 'Pending' ? (
                   <>
                     <button
-                      onClick={() => updateStatus(order.orderId, "Processing", order.orderType)}
+                      onClick={() =>
+                        updateStatus(order.orderId, 'Processing', order.orderType)
+                      }
                       className="bg-green-500 text-white px-3 py-1 mr-2 rounded"
                     >
                       Accept
                     </button>
                     <button
-                      onClick={() => updateStatus(order.orderId, "Rejected", order.orderType)}
+                      onClick={() =>
+                        updateStatus(order.orderId, 'Rejected', order.orderType)
+                      }
                       className="bg-red-500 text-white px-3 py-1 rounded"
                     >
                       Reject
                     </button>
                   </>
                 ) : (
-                  <span className="font-semibold">{order.manufacturerStatus}</span>
+                  <span className="font-semibold">
+                    {order.manufacturerStatus}
+                  </span>
                 )}
               </TableCell>
             </TableRow>

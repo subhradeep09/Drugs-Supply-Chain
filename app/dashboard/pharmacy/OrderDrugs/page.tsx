@@ -11,7 +11,7 @@ export default function OrderPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/medicines')
+    fetch('/api/medicines/public')
       .then(res => res.json())
       .then(data => {
         setMedicines(data);
