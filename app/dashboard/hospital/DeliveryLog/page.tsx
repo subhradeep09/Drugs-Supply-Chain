@@ -1,59 +1,85 @@
 'use client';
-import React, { useState } from 'react';
 
-const mockDeliveries = [
-  { orderId: 'ORD001', drug: 'Paracetamol 500mg', quantity: 100, deliveryDate: '2024-06-01', status: 'Delivered' },
-  { orderId: 'ORD002', drug: 'Amoxicillin 250mg', quantity: 50, deliveryDate: '2024-06-02', status: 'Delivered' },
-  { orderId: 'ORD003', drug: 'Ibuprofen 400mg', quantity: 75, deliveryDate: '2024-06-03', status: 'Pending' },
-];
+import { useEffect, useState } from 'react';
 
-export default function DeliveryLogPage() {
-  const [search, setSearch] = useState('');
-  const filtered = mockDeliveries.filter(
-    (d) =>
-      d.orderId.toLowerCase().includes(search.toLowerCase()) ||
-      d.drug.toLowerCase().includes(search.toLowerCase())
-  );
+interface DeliveryLog {
+  _id: string;
+  medicineName: string;
+  quantity: number;
+  price: number;
+  totalValue: number;
+  hospitalName: string;
+  deliveryDate: string;
+  manufacturerStatus: string;
+}
+
+export default function DeliveryLogsPage() {
+  const [logs, setLogs] = useState<DeliveryLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/hospital-delivery-logs')
+      .then((res) => res.json())
+      .then((data) => {
+        setLogs(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch delivery logs:', err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Delivery Logs</h1>
-      <div className="mb-4 flex gap-2">
-        <input
-          className="input w-full max-w-xs"
-          placeholder="Search by order ID or drug..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">Drug</th>
-              <th className="p-3 text-left">Quantity</th>
-              <th className="p-3 text-left">Delivery Date</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="text-center p-6">No deliveries found.</td></tr>
-            ) : filtered.map((d, i) => (
-              <tr key={i} className="border-b hover:bg-gray-50">
-                <td className="p-3">{d.orderId}</td>
-                <td className="p-3">{d.drug}</td>
-                <td className="p-3">{d.quantity}</td>
-                <td className="p-3">{d.deliveryDate}</td>
-                <td className="p-3">{d.status}</td>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Delivery Logs</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : logs.length === 0 ? (
+        <p className="text-gray-500">No delivery records found.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white shadow-md rounded-xl">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="py-2 px-4 text-left">Medicine</th>
+                <th className="py-2 px-4 text-left">Quantity</th>
+                <th className="py-2 px-4 text-left">Price</th>
+                <th className="py-2 px-4 text-left">Total</th>
+                <th className="py-2 px-4 text-left">Hospital</th>
+                <th className="py-2 px-4 text-left">Delivered On</th>
+                <th className="py-2 px-4 text-left">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-      `}</style>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log._id} className="border-t hover:bg-gray-50">
+                  <td className="py-2 px-4">{log.medicineName}</td>
+                  <td className="py-2 px-4">{log.quantity}</td>
+                  <td className="py-2 px-4">₹{log.price.toFixed(2)}</td>
+                  <td className="py-2 px-4">₹{log.totalValue.toFixed(2)}</td>
+                  <td className="py-2 px-4">{log.hospitalName || '—'}</td>
+                  <td className="py-2 px-4">
+                    {log.deliveryDate ? new Date(log.deliveryDate).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="py-2 px-4 capitalize">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        log.manufacturerStatus === 'delivered'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
+                      {log.manufacturerStatus}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
-} 
+}

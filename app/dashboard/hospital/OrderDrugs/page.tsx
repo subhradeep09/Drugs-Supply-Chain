@@ -27,8 +27,8 @@ export default function OrderPage() {
   );
 
   const handlePlaceOrder = async () => {
-    if (!hospitalName || !deliveryDate) {
-      alert('Please enter hospital name and delivery date.');
+    if ( !deliveryDate) {
+      alert('Please enter delivery date.');
       return;
     }
 
@@ -38,7 +38,6 @@ export default function OrderPage() {
       medicineName: selectedMedicine.brandName,
       quantity,
       price: selectedMedicine.offerPrice,
-      hospitalName,
       totalValue: selectedMedicine.offerPrice * quantity,
       deliveryDate,
       orderDate: new Date().toISOString(),
@@ -241,18 +240,7 @@ export default function OrderPage() {
                 Place Your Order
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hospital Name
-                  </label>
-                  <input
-                    type="text"
-                    value={hospitalName}
-                    onChange={(e) => setHospitalName(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    placeholder="Enter hospital name"
-                  />
-                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Delivery Date

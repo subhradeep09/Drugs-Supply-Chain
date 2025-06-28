@@ -3,6 +3,7 @@ import HospitalOrder from '@/lib/models/orderh';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import {User} from '@/lib/models/User';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,12 +33,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const data = await req.json();
+    
     const userId = session.user._id || session.user.id;
-
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+    const data = await req.json();
     const order = await HospitalOrder.create({
       ...data,
       userId,
+      hospitalName: user.name,
     });
 
     return NextResponse.json(order, { status: 201 });
