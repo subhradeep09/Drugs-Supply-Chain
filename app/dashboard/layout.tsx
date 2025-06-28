@@ -14,7 +14,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname()
- const { data: session, status } = useSession()
+  const { data: session, status } = useSession()
   const { user } = useSelector((state: RootState) => state.auth)
 
   const [verifying, setVerifying] = useState(true)
@@ -28,12 +28,22 @@ export default function DashboardLayout({
         return
       }
 
+      const user = session.user
+
       try {
         const res = await fetch('/api/verification/status')
         const data = await res.json()
 
         if (!res.ok || data.applicationStatus !== 'APPROVED') {
           router.push('/application-status')
+          return
+        }
+
+        const role = user.role
+        const expectedBasePath = `/dashboard/${role.toLowerCase().replace('_staff', '')}`
+
+        if (!pathname.startsWith(expectedBasePath)) {
+          router.push(expectedBasePath)
           return
         }
 
@@ -45,12 +55,15 @@ export default function DashboardLayout({
     }
 
     verifyAccess()
-  }, [status, session, router])
+  }, [status, session, pathname, router])
 
-  // Global loading state
   if (status === 'loading' || verifying || !session?.user) {
-  return <div className="p-8 text-center text-sm text-gray-500">Loading dashboard...</div>
-}
+    return (
+      <div className="p-8 text-center text-sm text-gray-500">
+        Loading dashboard...
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen">

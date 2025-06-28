@@ -6,9 +6,10 @@ export async function POST(request: Request) {
   await dbConnect();
 
   try {
-    const { name, otp } = await request.json();
-    const decodedname = decodeURIComponent(name);
-    const user = await User.findOne({ name: decodedname });
+    const { email, otp } = await request.json();
+    const decodedemail = decodeURIComponent(email);
+    console.log(decodedemail);
+    const user = await User.findOne({ email: decodedemail });
 
     if (!user) {
       return Response.json(

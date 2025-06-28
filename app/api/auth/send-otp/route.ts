@@ -13,16 +13,16 @@ export async function POST(request: Request) {
   try {
     const { name, email, password, role, organization } = await request.json();
 
-    const existingVerifiedUserByUsername = await User.findOne({
-      $or: [{ name }, { email }],
+    const existingVerifiedUserByEmail = await User.findOne({
+      email,
       isEmailVerified: true,
     })
 
-    if (existingVerifiedUserByUsername) {
+    if (existingVerifiedUserByEmail) {
       return NextResponse.json(
         {
           success: false,
-          message: "Username is already taken",
+          message: "Email is already registered",
         },
         { status: 400 }
       );
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
 
-    response.cookies.set("just-registered", name, {
+    response.cookies.set("just-registered", email, {
       httpOnly: true,
       maxAge: 5 * 60, // 5 minutes
       path: "/",

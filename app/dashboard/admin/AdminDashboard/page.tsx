@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import * as echarts from 'echarts';
@@ -8,27 +8,27 @@ const AdminDashboardPage: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState("EN");
   const [currentPage, setCurrentPage] = useState(1);
-  const [timeRange, setTimeRange] = useState('monthly');
+  const [timeRange, setTimeRange] = useState("monthly");
 
   const updateCharts = (range: string) => {
     setTimeRange(range);
     const deliveryTimeChart = echarts.getInstanceByDom(
-      document.getElementById('delivery-time-chart') as HTMLElement
+      document.getElementById("delivery-time-chart") as HTMLElement
     );
     const delaysChart = echarts.getInstanceByDom(
-      document.getElementById('delays-chart') as HTMLElement
+      document.getElementById("delays-chart") as HTMLElement
     );
 
     if (deliveryTimeChart && delaysChart) {
       // Update delivery time chart data based on range
       const deliveryData =
-        range === 'weekly'
+        range === "weekly"
           ? [3.2, 3.8, 4.1, 3.5, 3.9, 3.2, 3.7]
-          : range === 'monthly'
-          ? [4.2, 3.8, 5.1, 3.5, 4.0, 3.2, 3.9]
-          : [4.5, 4.2, 3.9, 4.1, 3.8, 4.3, 4.0];
+          : range === "monthly"
+            ? [4.2, 3.8, 5.1, 3.5, 4.0, 3.2, 3.9]
+            : [4.5, 4.2, 3.9, 4.1, 3.8, 4.3, 4.0];
 
       deliveryTimeChart.setOption({
         series: [
@@ -40,23 +40,23 @@ const AdminDashboardPage: React.FC = () => {
 
       // Update delays chart data based on range
       const delaysData =
-        range === 'weekly'
+        range === "weekly"
           ? [
-              { value: 90, name: 'On Time' },
-              { value: 7, name: 'Delayed' },
-              { value: 3, name: 'Failed' },
+              { value: 90, name: "On Time" },
+              { value: 7, name: "Delayed" },
+              { value: 3, name: "Failed" },
             ]
-          : range === 'monthly'
-          ? [
-              { value: 85, name: 'On Time' },
-              { value: 10, name: 'Delayed' },
-              { value: 5, name: 'Failed' },
-            ]
-          : [
-              { value: 82, name: 'On Time' },
-              { value: 12, name: 'Delayed' },
-              { value: 6, name: 'Failed' },
-            ];
+          : range === "monthly"
+            ? [
+                { value: 85, name: "On Time" },
+                { value: 10, name: "Delayed" },
+                { value: 5, name: "Failed" },
+              ]
+            : [
+                { value: 82, name: "On Time" },
+                { value: 12, name: "Delayed" },
+                { value: 6, name: "Failed" },
+              ];
 
       delaysChart.setOption({
         series: [
@@ -72,38 +72,38 @@ const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     // Delivery Time Chart
     const deliveryTimeChart = echarts.init(
-      document.getElementById('delivery-time-chart') as HTMLElement
+      document.getElementById("delivery-time-chart") as HTMLElement
     );
     const deliveryTimeOption = {
       animation: false,
       tooltip: {
-        trigger: 'axis',
+        trigger: "axis",
       },
       grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
+        left: "3%",
+        right: "4%",
+        bottom: "3%",
         containLabel: true,
       },
       xAxis: {
-        type: 'category',
-        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        type: "category",
+        data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       },
       yAxis: {
-        type: 'value',
-        name: 'Hours',
+        type: "value",
+        name: "Hours",
       },
       series: [
         {
-          name: 'Average Delivery Time',
-          type: 'line',
+          name: "Average Delivery Time",
+          type: "line",
           data: [4.2, 3.8, 5.1, 3.5, 4.0, 3.2, 3.9],
           smooth: true,
           lineStyle: {
-            color: '#1E40AF',
+            color: "#1E40AF",
           },
           itemStyle: {
-            color: '#1E40AF',
+            color: "#1E40AF",
           },
         },
       ],
@@ -112,46 +112,46 @@ const AdminDashboardPage: React.FC = () => {
 
     // Delays Chart
     const delaysChart = echarts.init(
-      document.getElementById('delays-chart') as HTMLElement
+      document.getElementById("delays-chart") as HTMLElement
     );
     const delaysOption = {
       animation: false,
       tooltip: {
-        trigger: 'item',
+        trigger: "item",
       },
       legend: {
-        top: '2%',
-        left: 'center',
+        top: "2%",
+        left: "center",
       },
       series: [
         {
-          name: 'Delivery Status',
-          type: 'pie',
-          radius: ['40%', '70%'],
+          name: "Delivery Status",
+          type: "pie",
+          radius: ["40%", "70%"],
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
-            borderColor: '#fff',
+            borderColor: "#fff",
             borderWidth: 2,
           },
           label: {
             show: false,
-            position: 'center',
+            position: "center",
           },
           emphasis: {
             label: {
               show: true,
-              fontSize: '14',
-              fontWeight: 'bold',
+              fontSize: "14",
+              fontWeight: "bold",
             },
           },
           labelLine: {
             show: false,
           },
           data: [
-            { value: 85, name: 'On Time', itemStyle: { color: '#10B981' } },
-            { value: 10, name: 'Delayed', itemStyle: { color: '#F59E0B' } },
-            { value: 5, name: 'Failed', itemStyle: { color: '#EF4444' } },
+            { value: 85, name: "On Time", itemStyle: { color: "#10B981" } },
+            { value: 10, name: "Delayed", itemStyle: { color: "#F59E0B" } },
+            { value: 5, name: "Failed", itemStyle: { color: "#EF4444" } },
           ],
         },
       ],
@@ -163,10 +163,10 @@ const AdminDashboardPage: React.FC = () => {
       deliveryTimeChart.resize();
       delaysChart.resize();
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       deliveryTimeChart.dispose();
       delaysChart.dispose();
     };
@@ -187,13 +187,13 @@ const AdminDashboardPage: React.FC = () => {
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'Local' : 'EN');
+    setLanguage(language === "EN" ? "Local" : "EN");
   };
 
   return (
     <div
       className={`min-h-screen bg-gray-50 ${
-        isDarkMode ? 'dark:bg-gray-900 dark:text-white' : ''
+        isDarkMode ? "dark:bg-gray-900 dark:text-white" : ""
       }`}
     >
       {/* Top Navigation Bar */}
@@ -227,7 +227,9 @@ const AdminDashboardPage: React.FC = () => {
             onClick={toggleDarkMode}
             className="text-gray-600 hover:text-blue-700 cursor-pointer !rounded-button whitespace-nowrap"
           >
-            <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
+            <i
+              className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"} text-xl`}
+            ></i>
           </button>
           <div className="relative">
             <button
@@ -314,7 +316,9 @@ const AdminDashboardPage: React.FC = () => {
               <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center text-white">
                 <span className="text-sm font-medium">JD</span>
               </div>
-              <span className="text-sm font-medium text-gray-700">John Doe</span>
+              <span className="text-sm font-medium text-gray-700">
+                John Doe
+              </span>
               <i className="fas fa-chevron-down text-xs text-gray-500"></i>
             </button>
             {isProfileOpen && (
@@ -339,9 +343,10 @@ const AdminDashboardPage: React.FC = () => {
                 </a>
                 <div className="border-t border-gray-100 my-1"></div>
                 <button
-                  href="#logout"
-                  className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  onClick={() => signOut({ callbackUrl: '/sign-in' })}
+
+                  onClick={() => signOut({ callbackUrl: "/sign-in" })}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+
                 >
                   Sign out
                 </button>
@@ -377,7 +382,9 @@ const AdminDashboardPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-gray-500 text-sm">Total Drugs in Inventory</p>
+                <p className="text-gray-500 text-sm">
+                  Total Drugs in Inventory
+                </p>
                 <h3 className="text-3xl font-bold text-gray-800 mt-1">1,248</h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -388,19 +395,23 @@ const AdminDashboardPage: React.FC = () => {
               <span className="text-green-500 flex items-center text-sm font-medium">
                 <i className="fas fa-arrow-up mr-1"></i> 12%
               </span>
-              <span className="text-gray-400 text-sm ml-2">from last month</span>
+              <span className="text-gray-400 text-sm ml-2">
+                from last month
+              </span>
             </div>
             <div className="h-2 w-full bg-gray-100 rounded-full mt-4">
               <div
                 className="h-2 bg-blue-600 rounded-full"
-                style={{ width: '75%' }}
+                style={{ width: "75%" }}
               ></div>
             </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-gray-500 text-sm">Pending Hospital Requests</p>
+                <p className="text-gray-500 text-sm">
+                  Pending Hospital Requests
+                </p>
                 <h3 className="text-3xl font-bold text-gray-800 mt-1">42</h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -416,7 +427,7 @@ const AdminDashboardPage: React.FC = () => {
             <div className="h-2 w-full bg-gray-100 rounded-full mt-4">
               <div
                 className="h-2 bg-yellow-500 rounded-full"
-                style={{ width: '65%' }}
+                style={{ width: "65%" }}
               ></div>
             </div>
           </div>
@@ -439,7 +450,7 @@ const AdminDashboardPage: React.FC = () => {
             <div className="h-2 w-full bg-gray-100 rounded-full mt-4">
               <div
                 className="h-2 bg-red-500 rounded-full"
-                style={{ width: '35%' }}
+                style={{ width: "35%" }}
               ></div>
             </div>
           </div>
@@ -462,7 +473,7 @@ const AdminDashboardPage: React.FC = () => {
             <div className="h-2 w-full bg-gray-100 rounded-full mt-4">
               <div
                 className="h-2 bg-green-500 rounded-full"
-                style={{ width: '85%' }}
+                style={{ width: "85%" }}
               ></div>
             </div>
           </div>
@@ -751,8 +762,8 @@ const AdminDashboardPage: React.FC = () => {
                   onClick={() => setCurrentPage(1)}
                   className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                     currentPage === 1
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   1
@@ -761,8 +772,8 @@ const AdminDashboardPage: React.FC = () => {
                   onClick={() => setCurrentPage(2)}
                   className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                     currentPage === 2
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   2
@@ -771,8 +782,8 @@ const AdminDashboardPage: React.FC = () => {
                   onClick={() => setCurrentPage(3)}
                   className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                     currentPage === 3
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   3
@@ -990,31 +1001,31 @@ const AdminDashboardPage: React.FC = () => {
                 </h2>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => updateCharts('weekly')}
+                    onClick={() => updateCharts("weekly")}
                     className={`px-3 py-1 rounded-lg text-sm font-medium transition duration-200 cursor-pointer !rounded-button whitespace-nowrap ${
-                      timeRange === 'weekly'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      timeRange === "weekly"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                     }`}
                   >
                     Weekly
                   </button>
                   <button
-                    onClick={() => updateCharts('monthly')}
+                    onClick={() => updateCharts("monthly")}
                     className={`px-3 py-1 rounded-lg text-sm font-medium transition duration-200 cursor-pointer !rounded-button whitespace-nowrap ${
-                      timeRange === 'monthly'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      timeRange === "monthly"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                     }`}
                   >
                     Monthly
                   </button>
                   <button
-                    onClick={() => updateCharts('yearly')}
+                    onClick={() => updateCharts("yearly")}
                     className={`px-3 py-1 rounded-lg text-sm font-medium transition duration-200 cursor-pointer !rounded-button whitespace-nowrap ${
-                      timeRange === 'yearly'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      timeRange === "yearly"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                     }`}
                   >
                     Yearly
@@ -1027,10 +1038,7 @@ const AdminDashboardPage: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-500 mb-4">
                   Average Delivery Times
                 </h3>
-                <div
-                  id="delivery-time-chart"
-                  className="h-64 w-full"
-                ></div>
+                <div id="delivery-time-chart" className="h-64 w-full"></div>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-4">
@@ -1363,7 +1371,9 @@ const AdminDashboardPage: React.FC = () => {
             </table>
           </div>
           <div className="px-6 py-3 flex justify-between items-center border-t border-gray-100">
-            <p className="text-sm text-gray-500">Showing 4 of 128 transactions</p>
+            <p className="text-sm text-gray-500">
+              Showing 4 of 128 transactions
+            </p>
             <div className="flex space-x-1">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -1375,8 +1385,8 @@ const AdminDashboardPage: React.FC = () => {
                 onClick={() => setCurrentPage(1)}
                 className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                   currentPage === 1
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 1
@@ -1385,8 +1395,8 @@ const AdminDashboardPage: React.FC = () => {
                 onClick={() => setCurrentPage(2)}
                 className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                   currentPage === 2
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 2
@@ -1395,8 +1405,8 @@ const AdminDashboardPage: React.FC = () => {
                 onClick={() => setCurrentPage(3)}
                 className={`px-3 py-1 rounded text-sm cursor-pointer !rounded-button whitespace-nowrap ${
                   currentPage === 3
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 3
