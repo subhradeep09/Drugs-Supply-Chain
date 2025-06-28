@@ -9,6 +9,7 @@ export default function OrderPage() {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetch('/api/medicines')
@@ -18,6 +19,12 @@ export default function OrderPage() {
         setIsLoading(false);
       });
   }, []);
+
+  const filteredMedicines = medicines.filter((medicine) =>
+    `${medicine.brandName} ${medicine.genericName}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
   const handlePlaceOrder = async () => {
     if (!hospitalName || !deliveryDate) {
@@ -35,7 +42,7 @@ export default function OrderPage() {
       totalValue: selectedMedicine.offerPrice * quantity,
       deliveryDate,
       orderDate: new Date().toISOString(),
-      manufacturerStatus: "Pending"
+      manufacturerStatus: 'Pending',
     };
 
     try {
@@ -43,7 +50,7 @@ export default function OrderPage() {
       await fetch('/api/orderh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify(orderData),
       });
       alert('Order placed successfully!');
       setSelectedMedicine(null);
@@ -59,31 +66,59 @@ export default function OrderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-sky-100">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div
+      className="min-h-screen py-8 px-4 sm:px-6 lg:px-8"
+      style={{
+        background:
+          'linear-gradient(rgb(222, 243, 248) 50%)',
+      }}
+    >
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Order Medicines</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">
+          Order Medicines
+        </h1>
+
+        {/* 🔍 Search Bar */}
+        <div className="mb-6 max-w-xl mx-auto">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search medicine by name..."
+            className="w-full px-4 py-3 text-sm rounded-lg border shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {medicines.map((medicine) => (
-            <div key={medicine._id} className="bg-white rounded-lg shadow p-4">
-              <img 
-                src={medicine.productImage || '/placeholder-medicine.jpg'} 
-                alt={medicine.brandName} 
-                className="w-full h-40 object-contain bg-gray-100 mb-4"
+          {filteredMedicines.map((medicine) => (
+            <div
+              key={medicine._id}
+              className="bg-white rounded-xl shadow p-4 transform transition duration-300 hover:scale-[1.03] hover:shadow-xl animate-fadeIn"
+            >
+              <img
+                src={medicine.productImage || '/placeholder-medicine.jpg'}
+                alt={medicine.brandName}
+                className="w-full h-36 object-contain bg-gray-100 mb-3 rounded"
               />
-              <h2 className="text-md font-bold">{medicine.brandName}</h2>
+              <h2 className="text-md font-semibold">{medicine.brandName}</h2>
               <p className="text-sm text-gray-500">{medicine.genericName}</p>
               <p className="text-sm text-gray-500">MRP: ₹{medicine.mrp}</p>
-              <p className="text-green-600 font-semibold">Offer: ₹{medicine.offerPrice}</p>
-              <p className="text-sm text-green-700 mb-4">
-                Save ₹{medicine.mrp - medicine.offerPrice} ({Math.round(((medicine.mrp - medicine.offerPrice) / medicine.mrp) * 100)}% OFF)
+              <p className="text-green-600 font-semibold">
+                Offer: ₹{medicine.offerPrice}
+              </p>
+              <p className="text-xs text-green-700 mb-2">
+                Save ₹{medicine.mrp - medicine.offerPrice} (
+                {Math.round(
+                  ((medicine.mrp - medicine.offerPrice) / medicine.mrp) * 100
+                )}
+                % OFF)
               </p>
               <button
                 onClick={() => {
@@ -92,7 +127,7 @@ export default function OrderPage() {
                   setDeliveryDate('');
                   setQuantity(1);
                 }}
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-all duration-300 hover:scale-105"
               >
                 Add
               </button>
@@ -101,97 +136,191 @@ export default function OrderPage() {
         </div>
       </div>
 
+      {/* 🧾 Modal */}
       {selectedMedicine && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center px-4">
-    <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-4xl relative">
-      <button
-        onClick={() => setSelectedMedicine(null)}
-        className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold"
-      >
-        ×
-      </button>
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center px-4">
+          <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-5xl relative overflow-y-auto max-h-[90vh] animate-zoomIn">
+            <button
+              onClick={() => setSelectedMedicine(null)}
+              className="absolute top-4 right-5 text-gray-400 hover:text-black text-3xl font-bold focus:outline-none"
+            >
+              &times;
+            </button>
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left: Product Image */}
-        <div className="flex-shrink-0">
-          <img
-            src={selectedMedicine.productImage || '/placeholder-medicine.jpg'}
-            alt={selectedMedicine.brandName}
-            className="w-72 h-72 object-contain rounded-xl bg-gray-100 border"
-          />
+            <div className="flex flex-col md:flex-row gap-8 mt-4">
+              <div className="flex-shrink-0 w-full md:w-72">
+                <img
+                  src={
+                    selectedMedicine.productImage ||
+                    '/placeholder-medicine.jpg'
+                  }
+                  alt={selectedMedicine.brandName}
+                  className="w-full h-72 object-contain rounded-xl bg-gray-100 border"
+                />
+              </div>
+
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                  {selectedMedicine.brandName}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
+                  <p>
+                    <strong>Generic Name:</strong>{' '}
+                    {selectedMedicine.genericName}
+                  </p>
+                  <p>
+                    <strong>Category:</strong> {selectedMedicine.category}
+                  </p>
+                  <p>
+                    <strong>{selectedMedicine.shortDescription}</strong>
+                  </p>
+                  <p>
+                    <strong>Description:</strong>{' '}
+                    {selectedMedicine.detailedDescription}
+                  </p>
+                  <p>
+                    <strong>Dosage Form:</strong>{' '}
+                    {selectedMedicine.dosageForm}
+                  </p>
+                  <p>
+                    <strong>Strength:</strong> {selectedMedicine.strength}
+                  </p>
+                  <p>
+                    <strong>Pack Size:</strong> {selectedMedicine.packSize}
+                  </p>
+                  <p>
+                    <strong>License No:</strong>{' '}
+                    {selectedMedicine.licenseNumber}
+                  </p>
+                  <p>
+                    <strong>Batch No:</strong>{' '}
+                    {selectedMedicine.batchNumber}
+                  </p>
+                  <p>
+                    <strong>Manufacture Date:</strong>{' '}
+                    {selectedMedicine.manufacturingDate?.slice(0, 10)}
+                  </p>
+                  <p>
+                    <strong>Expiry Date:</strong>{' '}
+                    {selectedMedicine.expiryDate?.slice(0, 10)}
+                  </p>
+                  <p>
+                    <strong>Storage Conditions:</strong>{' '}
+                    {selectedMedicine.storageConditions}
+                  </p>
+                  <p>
+                    <strong>Available Stock:</strong>{' '}
+                    {selectedMedicine.stockQuantity}
+                  </p>
+                </div>
+
+                <div className="mt-6 border-t pt-4">
+                  <p className="text-lg">
+                    <strong>MRP:</strong> ₹{selectedMedicine.mrp}
+                  </p>
+                  <p className="text-lg text-green-600 font-medium">
+                    <strong>Offer:</strong> ₹{selectedMedicine.offerPrice}
+                  </p>
+                  <p className="text-sm text-green-700">
+                    Save ₹
+                    {selectedMedicine.mrp - selectedMedicine.offerPrice} (
+                    {Math.round(
+                      ((selectedMedicine.mrp -
+                        selectedMedicine.offerPrice) /
+                        selectedMedicine.mrp) *
+                        100
+                    )}
+                    % OFF)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">
+                Place Your Order
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hospital Name
+                  </label>
+                  <input
+                    type="text"
+                    value={hospitalName}
+                    onChange={(e) => setHospitalName(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Enter hospital name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Delivery Date
+                  </label>
+                  <input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) =>
+                      setQuantity(parseInt(e.target.value) || 1)
+                    }
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handlePlaceOrder}
+                className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl text-lg transition-all duration-300 hover:scale-105"
+              >
+                🛒 Confirm & Place Order
+              </button>
+            </div>
+          </div>
         </div>
-
-        {/* Right: Details */}
-        <div className="flex-1 space-y-3">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">{selectedMedicine.brandName}</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <p><span className="font-semibold">Generic Name:</span> {selectedMedicine.genericName}</p>
-            <p><span className="font-semibold">Category:</span> {selectedMedicine.category}</p>
-            <p><span className="font-semibold">Dosage Form:</span> {selectedMedicine.dosageForm}</p>
-            <p><span className="font-semibold">Strength:</span> {selectedMedicine.strength}</p>
-            <p><span className="font-semibold">Pack Size:</span> {selectedMedicine.packSize}</p>
-            <p><span className="font-semibold">License No:</span> {selectedMedicine.licenseNumber}</p>
-            <p><span className="font-semibold">Batch No:</span> {selectedMedicine.batchNumber}</p>
-            <p><span className="font-semibold">Mfg Date:</span> {selectedMedicine.manufacturingDate?.slice(0,10)}</p>
-            <p><span className="font-semibold">Expiry Date:</span> {selectedMedicine.expiryDate?.slice(0,10)}</p>
-            <p><span className="font-semibold">Storage:</span> {selectedMedicine.storageConditions}</p>
-            <p><span className="font-semibold">Stock:</span> {selectedMedicine.stockQuantity}</p>
-          </div>
-
-          <div className="mt-4">
-            <p className="text-lg"><span className="font-semibold">MRP:</span> ₹{selectedMedicine.mrp}</p>
-            <p className="text-lg text-green-600"><span className="font-semibold">Offer:</span> ₹{selectedMedicine.offerPrice}</p>
-            <p className="text-sm text-green-700">
-              Save ₹{selectedMedicine.mrp - selectedMedicine.offerPrice} ({Math.round(((selectedMedicine.mrp - selectedMedicine.offerPrice) / selectedMedicine.mrp) * 100)}% OFF)
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Form Section */}
-      <div className="mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block mb-1 font-medium">Hospital Name:</label>
-            <input
-              type="text"
-              value={hospitalName}
-              onChange={(e) => setHospitalName(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Delivery Date:</label>
-            <input
-              type="date"
-              value={deliveryDate}
-              onChange={(e) => setDeliveryDate(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Quantity:</label>
-            <input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={handlePlaceOrder}
-          className="mt-6 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 text-lg font-semibold"
-        >
-          Place Order
-        </button>
-      </div>
-    </div>
-  </div>
-
       )}
+
+      {/* ✨ Custom Animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes zoomIn {
+          0% {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-zoomIn {
+          animation: zoomIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
