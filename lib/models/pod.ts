@@ -1,12 +1,33 @@
-// ✅ lib/models/pod.ts
-import mongoose from 'mongoose';
+// lib/models/Pod.ts
 
-const podSchema = new mongoose.Schema({
-  orderId: String,
-  hospitalName: String, // ✅ updated
-  vendorId: String,
-  podUrl: String,
-  uploadedAt: { type: Date, default: Date.now },
-});
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
-export default mongoose.models.Pod || mongoose.model('Pod', podSchema);
+export interface IPod extends Document {
+  userId: Types.ObjectId; // uploader user
+  orderId: string;
+  hospitalName: string;
+  vendorId: string;
+  podUrl: string;
+  uploadedAt: Date;
+}
+
+const podSchema = new Schema<IPod>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    orderId: String,
+    hospitalName: String,
+    vendorId: String,
+    podUrl: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.Pod || mongoose.model<IPod>('Pod', podSchema);
