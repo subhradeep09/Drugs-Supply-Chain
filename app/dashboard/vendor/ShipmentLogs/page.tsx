@@ -1,91 +1,101 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
 interface Medicine {
   _id: string;
   brandName: string;
   genericName: string;
-  category: string;
-  dosageForm: string;
-  strength: string;
-  packSize: string;
-  offerPrice: number;
-  mrp: number;
-  stockQuantity: number;
-  productImage: string;
+  totalStock: number;
+  minOfferPrice: number;
+  batches: Batch[];
 }
 
-export default function ViewVendorMedicines() {
-  const { data: session, status } = useSession();
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface Batch {
+  _id: string;
+  batchNumber: string;
+  expiryDate: string;
+  manufacturingDate: string;
+  stockQuantity: number;
+  mrp: number;
+  offerPrice: number;
+}
+
+export default function ViewInventoryPage() {
+  const [inventory, setInventory] = useState<Medicine[]>([]);
+  const [openDetails, setOpenDetails] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchVendorMedicines = async () => {
-      try {
-        const res = await fetch('/api/vendor-medicines'); // ✅ Updated API path
-        if (!res.ok) throw new Error('Failed to fetch vendor medicines');
-        const data = await res.json();
-        setMedicines(data);
-      } catch (error) {
-        console.error('Error fetching vendor medicines:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (status === 'authenticated') {
-      fetchVendorMedicines();
-    }
-  }, [status]);
-
-  if (status === 'loading' || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 border-b-2"></div>
-      </div>
-    );
-  }
-
-  if (medicines.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600 text-xl font-medium">
-        You haven't added any medicines yet.
-      </div>
-    );
-  }
+    fetch('/api/vendor-inventory')
+      .then(res => res.json())
+      .then(data => setInventory(data));
+  }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">📋 Your Added Medicines</h1>
+    <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8">📦 My Inventory</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {medicines.map((medicine) => (
-          <div
-            key={medicine._id}
-            className="border p-4 rounded-xl shadow hover:shadow-lg transition duration-300 bg-white"
-          >
-            <img
-              src={medicine.productImage || '/placeholder-medicine.jpg'}
-              alt={medicine.brandName}
-              className="w-full h-40 object-contain bg-gray-100 rounded mb-3"
-            />
-            <h2 className="text-lg font-semibold">{medicine.brandName}</h2>
-            <p className="text-sm text-gray-600">{medicine.genericName}</p>
-            <p className="text-sm">Category: {medicine.category}</p>
-            <p className="text-sm">Dosage: {medicine.dosageForm}</p>
-            <p className="text-sm">Strength: {medicine.strength}</p>
-            <p className="text-sm">Pack Size: {medicine.packSize}</p>
-            <div className="mt-2">
-              <p className="text-sm text-gray-600 line-through">MRP: ₹{medicine.mrp}</p>
-              <p className="text-green-600 font-bold">Offer: ₹{medicine.offerPrice}</p>
+      {inventory.length === 0 ? (
+        <p>No inventory found.</p>
+      ) : (
+        <div className="space-y-6">
+          {inventory.map(med => (
+            <div
+              key={med._id}
+              className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-blue-700">
+                    {med.brandName} <span className="text-gray-500">({med.genericName})</span>
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Total Stock: <strong>{med.totalStock}</strong> | Starting at ₹{med.minOfferPrice}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setOpenDetails(openDetails === med._id ? null : med._id)
+                  }
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  {openDetails === med._id ? 'Hide Details' : 'View Details'}
+                </button>
+              </div>
+
+              {openDetails === med._id && (
+                <div className="mt-4">
+                  <h3 className="font-medium mb-2 text-gray-800">Batch Details:</h3>
+                  <table className="w-full text-sm border">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-3 py-2 text-left">Batch No.</th>
+                        <th className="px-3 py-2 text-left">MFG</th>
+                        <th className="px-3 py-2 text-left">EXP</th>
+                        <th className="px-3 py-2 text-right">Stock</th>
+                        <th className="px-3 py-2 text-right">MRP</th>
+                        <th className="px-3 py-2 text-right">Offer</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {med.batches.map(batch => (
+                        <tr key={batch._id} className="border-t">
+                          <td className="px-3 py-2">{batch.batchNumber}</td>
+                          <td className="px-3 py-2">{new Date(batch.manufacturingDate).toLocaleDateString()}</td>
+                          <td className="px-3 py-2">{new Date(batch.expiryDate).toLocaleDateString()}</td>
+                          <td className="px-3 py-2 text-right">{batch.stockQuantity}</td>
+                          <td className="px-3 py-2 text-right">₹{batch.mrp}</td>
+                          <td className="px-3 py-2 text-right">₹{batch.offerPrice}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-            <p className="text-sm mt-1">Stock: {medicine.stockQuantity}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

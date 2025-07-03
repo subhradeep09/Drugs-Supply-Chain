@@ -1,172 +1,132 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/app/ui/table';
 
-export default function ManufacturerOrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [orderTypeFilter, setOrderTypeFilter] = useState('All');
+interface DispatchedBatch {
+  batchId: string;
+  batchNumber: string;
+  expiryDate: string;
+  quantity: number;
+  price: number;
+}
 
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch('/api/vendor-received-orders');
-      const data = await res.json();
-      setOrders(data);
-      setFilteredOrders(data);
-    } catch (error) {
-      console.error('Failed to fetch vendor orders:', error);
-    }
-  };
+interface Order {
+  _id: string;
+  orderId: string;
+  medicineName: string;
+  quantity: number;
+  totalValue: number;
+  hospitalName: string;
+  deliveryDate: string;
+  orderDate: string;
+  manufacturerStatus: string;
+  dispatchedBatches: DispatchedBatch[];
+}
+
+export default function ReceivedOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchOrders();
+    fetch('/api/vendor-received-orders')
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading orders:', err);
+        setIsLoading(false);
+      });
   }, []);
 
-  const updateStatus = async (orderId, status, orderType) => {
-    const apiPath =
-      orderType === 'Hospital'
-        ? '/api/orderh/updateStatus'
-        : '/api/orderp/updateStatus';
+  const handleAccept = async (mongoId: string) => {
+    try {
+      const res = await fetch('/api/vendor-accept-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: mongoId }), // send actual _id
+      });
 
-    await fetch(apiPath, {
+      const data = await res.json();
+      if (res.ok) {
+        alert('Order accepted and dispatched successfully.');
+        setOrders((prev) => prev.filter((order) => order._id !== mongoId));
+      } else {
+        alert(data.error || 'Failed to accept order.');
+      }
+    } catch (error) {
+      console.error('Accept error:', error);
+    }
+  };
+
+  const handleReject = async (_id: string) => {
+  try {
+    const res = await fetch('/api/vendor-reject-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, status }),
+      body: JSON.stringify({ _id }),
     });
 
-    fetchOrders(); // Re-fetch updated list
-  };
-
-  const handleSearchAndFilter = () => {
-    let filtered = orders;
-
-    if (orderTypeFilter !== 'All') {
-      filtered = filtered.filter(
-        (order) => order.orderType === orderTypeFilter
-      );
+    const data = await res.json();
+    if (res.ok) {
+      alert('Order rejected successfully.');
+      setOrders((prev) => prev.filter((order) => order._id !== _id));
+    } else {
+      alert(data.error || 'Failed to reject order.');
     }
+  } catch (error) {
+    console.error('Reject error:', error);
+    alert('Error rejecting order.');
+  }
+};
 
-    if (searchTerm.trim() !== '') {
-      filtered = filtered.filter((order) =>
-        `${order.hospitalName || order.pharmacyName || ''} ${
-          order.medicineName || ''
-        }`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      );
-    }
 
-    if (filterStatus !== 'All') {
-      filtered = filtered.filter(
-        (order) => (order.manufacturerStatus || 'Pending') === filterStatus
-      );
-    }
-
-    setFilteredOrders(filtered);
-  };
-
-  useEffect(() => {
-    handleSearchAndFilter();
-  }, [searchTerm, filterStatus, orderTypeFilter, orders]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-10">
-      <h1 className="text-3xl mb-5 font-bold">Vendor - Received Orders</h1>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <h1 className="text-3xl font-bold mb-8">Received Orders</h1>
 
-      {/* Filters */}
-      <div className="flex flex-wrap mb-5 gap-4">
-        <input
-          type="text"
-          placeholder="Search by Hospital / Pharmacy / Medicine..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border rounded p-2 w-64"
-        />
+      {orders.length === 0 ? (
+        <p className="text-gray-600">No pending orders.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {orders.map((order) => (
+            <div key={order._id} className="bg-white p-6 rounded shadow border">
+              <h2 className="text-xl font-bold mb-2">{order.medicineName}</h2>
+              <p><b>Order ID:</b> {order.orderId}</p>
+              <p><b>Hospital:</b> {order.hospitalName}</p>
+              <p><b>Quantity:</b> {order.quantity}</p>
+              <p><b>Total Price:</b> {order.totalValue}</p>
+              <p><b>Order Date:</b> {order.orderDate?.slice(0, 10)}</p>
+              <p><b>Delivery Date:</b> {order.deliveryDate?.slice(0, 10)}</p>
+              <p><b>Status:</b> {order.manufacturerStatus}</p>
 
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border rounded p-3"
-        >
-          <option value="All">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Processing">Processing</option>
-          <option value="Rejected">Rejected</option>
-        </select>
-
-        <select
-          value={orderTypeFilter}
-          onChange={(e) => setOrderTypeFilter(e.target.value)}
-          className="border rounded p-2"
-        >
-          <option value="All">All Types</option>
-          <option value="Hospital">Hospital</option>
-          <option value="Pharmacy">Pharmacy</option>
-        </select>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Order ID</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Hospital / Pharmacy</TableHead>
-            <TableHead>Medicine</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredOrders.map((order) => (
-            <TableRow key={order._id}>
-              <TableCell>{order.orderId}</TableCell>
-              <TableCell>{order.orderType}</TableCell>
-              <TableCell>{order.hospitalName || order.pharmacyName}</TableCell>
-              <TableCell>{order.medicineName}</TableCell>
-              <TableCell>{order.quantity}</TableCell>
-              <TableCell>{order.manufacturerStatus || 'Pending'}</TableCell>
-              <TableCell>
-                {!order.manufacturerStatus ||
-                order.manufacturerStatus === 'Pending' ? (
-                  <>
-                    <button
-                      onClick={() =>
-                        updateStatus(order.orderId, 'Processing', order.orderType)
-                      }
-                      className="bg-green-500 text-white px-3 py-1 mr-2 rounded"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateStatus(order.orderId, 'Rejected', order.orderType)
-                      }
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Reject
-                    </button>
-                  </>
-                ) : (
-                  <span className="font-semibold">
-                    {order.manufacturerStatus}
-                  </span>
-                )}
-              </TableCell>
-            </TableRow>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => handleAccept(order._id)}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Accept & Dispatch
+                </button>
+                <button
+                  onClick={() => handleReject(order._id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
           ))}
-        </TableBody>
-      </Table>
+        </div>
+      )}
     </div>
   );
 }

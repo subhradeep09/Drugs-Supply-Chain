@@ -1,53 +1,43 @@
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
+import Order from '@/lib/models/orderh';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { NextRequest, NextResponse } from 'next/server';
 
-import Medicine from '@/lib/models/medicine';
-import HospitalOrder from '@/lib/models/orderh';
-import PharmacyOrder from '@/lib/models/orderp';
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    await dbConnect();
+    const vendorId = user._id;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id && !session?.user?._id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
+    // Step 1: Fetch pending orders with populated medicine info
+    const allPendingOrders = await Order.find({
+      manufacturerStatus: 'Pending',
+    })
+      .populate({
+        path: 'medicineId',
+        select: 'name userId',
+      })
+      .lean();
 
-    const vendorId = session.user._id || session.user.id;
+    // Step 2: Filter orders where the medicine’s vendor matches current user
+    const filteredOrders = allPendingOrders.filter(
+      (order) => order.medicineId?.userId?.toString() === vendorId.toString()
+    );
+    // console.log(filteredOrders);
 
-    // 🔍 Find all medicines added by the logged-in vendor
-    const medicines = await Medicine.find({ userId: vendorId }).select('_id');
-    const medicineIds = medicines.map(med => med._id.toString());
+    return NextResponse.json(filteredOrders, { status: 200 });
 
-    // 📦 Find all hospital orders for those medicines
-    const hospitalOrders = await HospitalOrder.find({
-      medicineId: { $in: medicineIds },
-    }).lean();
-
-    const pharmacyOrders = await PharmacyOrder.find({
-      medicineId: { $in: medicineIds },
-    }).lean();
-
-    // 🏷 Tag orders with type
-    const hospitalWithType = hospitalOrders.map(order => ({
-      ...order,
-      orderType: 'Hospital',
-    }));
-
-    const pharmacyWithType = pharmacyOrders.map(order => ({
-      ...order,
-      orderType: 'Pharmacy',
-    }));
-
-    // 🔗 Combine all and return
-    const combinedOrders = [...hospitalWithType, ...pharmacyWithType];
-
-    return NextResponse.json(combinedOrders);
-  } catch (error: any) {
-    console.error('Error in /api/vendor-received-orders:', error.message);
-    return NextResponse.json({ message: 'Server Error' }, { status: 500 });
+  } catch (error) {
+    console.error('[VENDOR_ORDERS_ERROR]', error);
+    return NextResponse.json({ error: 'Failed to fetch vendor orders' }, { status: 500 });
   }
 }
