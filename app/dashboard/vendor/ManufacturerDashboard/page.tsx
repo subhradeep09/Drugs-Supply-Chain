@@ -360,7 +360,7 @@ const ManufacturerDashboardPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-800">Manufacturer Dashboard</h1>
               <div className="text-sm text-gray-500">
                 <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
-                Sunday, June 22, 2025
+                {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
             </div>
 
