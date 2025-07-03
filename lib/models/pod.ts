@@ -9,6 +9,7 @@ export interface IPod extends Document {
   vendorId: string;
   podUrl: string;
   uploadedAt: Date;
+
 }
 
 const podSchema = new Schema<IPod>(
