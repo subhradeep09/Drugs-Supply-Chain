@@ -61,6 +61,7 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
   VENDOR: [
     { title: 'Manufacturer Dashboard', href: '/dashboard/vendor/ManufacturerDashboard', icon: Gauge },
     { title: 'Add Medicine', href: '/dashboard/vendor/AddMedicine', icon: PackagePlus },
+    { title: 'Update Stock', href: '/dashboard/vendor/UpdateStock', icon: PackagePlus },
     { title: 'Received Orders', href: '/dashboard/vendor/ReceivedOrders', icon: ShoppingCart },
     { title: 'Mark Dispatched', href: '/dashboard/vendor/MarkDispatched', icon: FileCheck },
     { title: 'Dispatch Status', href: '/dashboard/vendor/DispatchStatus', icon: Truck },
@@ -68,6 +69,7 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
     { title: 'Upload POD', href: '/dashboard/vendor/UploadPOD', icon: FileSignature },
     { title: 'Performance Metrics', href: '/dashboard/vendor/PerformanceMetrics', icon: Activity },
     { title: 'Shipment Logs', href: '/dashboard/vendor/ShipmentLogs', icon: FileText },
+    { title: 'Expiry Logs', href: '/dashboard/vendor/ExpiryLogs', icon: FileText },
   ]
 }
 

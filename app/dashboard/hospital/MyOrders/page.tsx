@@ -13,7 +13,7 @@ export default function HospitalOrdersPage() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch('/api/orderh')
+    fetch('/api/hospital-orders')
       .then((res) => res.json())
       .then((data) => setOrders(data));
   }, []);

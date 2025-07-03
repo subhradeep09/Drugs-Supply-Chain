@@ -1,72 +1,63 @@
-import dbConnect from '@/lib/db/mongodborder';
-import HospitalOrder from '@/lib/models/orderh';
-import DispenseLog from '@/lib/models/dispenseLog';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import mongoose from 'mongoose';
+import dbConnect from '@/lib/db/mongodborder';
+import Order from '@/lib/models/orderh';
+import Medicine from '@/lib/models/medicine';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
+    const today = new Date();
 
-    const userId = new mongoose.Types.ObjectId(session.user._id || session.user.id);
+    // Get only delivered orders with non-expired batches
+    const orders = await Order.find({
+      userId: user._id,
+      manufacturerStatus: 'Delivered',
+      'dispatchedBatches.expiryDate': { $gte: today },
+    }).populate('medicineId', 'brandName');
 
-    // Step 1: Get delivered inventory
-    const delivered = await HospitalOrder.aggregate([
-      {
-        $match: {
-          userId,
-          manufacturerStatus: "delivered"
-        }
-      },
-      {
-        $group: {
-          _id: "$medicineId",
-          medicineName: { $first: "$medicineName" },
-          totalDelivered: { $sum: "$quantity" }
+    const inventoryMap = new Map();
+
+    for (const order of orders) {
+      const medicineName = order.medicineId?.brandName || order.medicineName;
+      const key = medicineName.trim().toLowerCase();
+
+      if (!inventoryMap.has(key)) {
+        inventoryMap.set(key, {
+          _id: key,
+          medicineName,
+          totalStock: 0,
+          lastOrderedDate: order.deliveryDate,
+        });
+      }
+
+      const item = inventoryMap.get(key);
+
+      for (const batch of order.dispatchedBatches) {
+        if (new Date(batch.expiryDate) >= today) {
+          item.totalStock += batch.quantity;
         }
       }
-    ]);
 
-    // Step 2: Get dispensed inventory
-    const dispensed = await DispenseLog.aggregate([
-      {
-        $match: {
-          userId,
-        }
-      },
-      {
-        $group: {
-          _id: "$medicineId",
-          totalDispensed: { $sum: "$quantity" }
-        }
+      // Update lastOrderedDate if newer
+      if (new Date(order.deliveryDate) > new Date(item.lastOrderedDate)) {
+        item.lastOrderedDate = order.deliveryDate;
       }
-    ]);
-
-    // Step 3: Create a map of dispensed quantities
-    const dispensedMap = new Map();
-    for (const item of dispensed) {
-      dispensedMap.set(item._id.toString(), item.totalDispensed);
     }
 
-    // Step 4: Subtract dispensed from delivered
-    const adjustedInventory = delivered.map(item => {
-      const dispensedQty = dispensedMap.get(item._id.toString()) || 0;
-      return {
-        _id: item._id,
-        medicineName: item.medicineName,
-        totalDelivered: item.totalDelivered - dispensedQty
-      };
-    });
-
-    return NextResponse.json(adjustedInventory);
+    return NextResponse.json(Array.from(inventoryMap.values()), { status: 200 });
   } catch (error) {
-    console.error("Inventory fetch error:", error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    console.error('[INVENTORY_FETCH_ERROR]', error);
+    return NextResponse.json({ error: 'Failed to fetch inventory' }, { status: 500 });
   }
 }
