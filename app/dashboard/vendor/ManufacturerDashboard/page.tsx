@@ -1,9 +1,12 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import { signOut } from 'next-auth/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faPills, faBell, faUser, faChevronDown, faClock, faTruck, faCheckCircle, faExclamationTriangle, faHourglassHalf, faBoxOpen, faClipboardList, faFileInvoice, faTruckLoading, faClipboardCheck, faUpload, faPenAlt, faTimes, faCalendarAlt, faArrowUp, faEquals, faArrowDown, faChevronLeft, faChevronRight, faUserCircle, faCog, faSignOutAlt, faSearch
+} from '@fortawesome/free-solid-svg-icons';
 
 const ManufacturerDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -14,22 +17,16 @@ const ManufacturerDashboardPage: React.FC = () => {
   const fileInputInvoiceRef = useRef<HTMLInputElement>(null);
   const fileInputProofRef = useRef<HTMLInputElement>(null);
 
-  // Mock data for metrics
-  const metrics = {
-    pendingOrders: 42,
-    shipmentsInTransit: 18,
-    deliveriesConfirmed: 126,
-    slaBreaches: 3
-  };
-
-  // Mock data for orders
-  const orders = [
-    { id: 'ORD-2025-0642', status: 'pending', customer: 'Central Medical Supplies', date: '2025-06-20', dispatchDate: '2025-06-25' },
-    { id: 'ORD-2025-0641', status: 'in-progress', customer: 'Northern District Hospital', date: '2025-06-19', dispatchDate: '2025-06-24' },
-    { id: 'ORD-2025-0640', status: 'completed', customer: 'Southern Healthcare Center', date: '2025-06-18', dispatchDate: '2025-06-23' },
-    { id: 'ORD-2025-0639', status: 'delayed', customer: 'Eastern Medical Institute', date: '2025-06-17', dispatchDate: '2025-06-22' },
-    { id: 'ORD-2025-0638', status: 'pending', customer: 'Western Regional Hospital', date: '2025-06-16', dispatchDate: '2025-06-21' }
-  ];
+  // State for metrics and orders
+  const [metrics, setMetrics] = useState({
+    pendingOrders: 0,
+    shipmentsInTransit: 0,
+    deliveriesConfirmed: 0,
+    slaBreaches: 0,
+  });
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadMessage, setUploadMessage] = useState('');
 
   // Initialize charts
   useEffect(() => {
@@ -159,6 +156,46 @@ const ManufacturerDashboardPage: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Fetch orders and calculate metrics
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        // Fetch pending orders
+        const resPending = await fetch('/api/vendor-received-orders');
+        const pendingOrders = resPending.ok ? await resPending.json() : [];
+        // Fetch dispatched orders
+        const resDispatched = await fetch('/api/vendor-request-delivery');
+        const dispatchedOrders = resDispatched.ok ? await resDispatched.json() : [];
+        // Fetch delivered orders
+        const resDelivered = await fetch('/api/delivered_orders');
+        const deliveredOrders = resDelivered.ok ? await resDelivered.json() : [];
+
+        // Merge and map orders for table
+        const allOrders = [
+          ...pendingOrders.map((order: any) => ({ ...order, status: 'pending' })),
+          ...dispatchedOrders.map((order: any) => ({ ...order, status: 'in-progress' })),
+          ...deliveredOrders.map((order: any) => ({ ...order, status: 'completed' })),
+        ];
+        setOrders(allOrders);
+
+        // Calculate metrics
+        setMetrics({
+          pendingOrders: pendingOrders.length,
+          shipmentsInTransit: dispatchedOrders.length,
+          deliveriesConfirmed: deliveredOrders.length,
+          slaBreaches: allOrders.filter((o: any) => o.status === 'delayed').length,
+        });
+      } catch (err) {
+        setOrders([]);
+        setMetrics({ pendingOrders: 0, shipmentsInTransit: 0, deliveriesConfirmed: 0, slaBreaches: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
   // Calculate time remaining for next dispatch
   const calculateTimeRemaining = () => {
     const now = new Date();
@@ -198,10 +235,31 @@ const ManufacturerDashboardPage: React.FC = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: string) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      console.log(`${type} file selected:`, files[0].name);
+      setUploadMessage('');
+      const file = files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      // For demo, use the first order's id as orderId (should be selected by user in real app)
+      if (orders.length > 0) {
+        formData.append('orderId', orders[0].orderId || orders[0]._id || orders[0].id);
+        formData.append('vendorId', ''); // Optionally set vendorId if needed
+      }
+      try {
+        const res = await fetch('/api/upload_pod', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          setUploadMessage('✅ File uploaded successfully!');
+        } else {
+          setUploadMessage('❌ Upload failed.');
+        }
+      } catch (err) {
+        setUploadMessage('❌ Upload error.');
+      }
       event.target.value = '';
     }
   };
@@ -212,7 +270,7 @@ const ManufacturerDashboardPage: React.FC = () => {
       <header className="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-6 z-10">
         <div className="flex items-center">
           <div className="text-xl font-bold text-blue-900 mr-8">
-            <i className="fas fa-pills mr-2"></i>
+            <FontAwesomeIcon icon={faPills} className="mr-2" />
             MedSupply
           </div>
           <div className="relative">
@@ -223,7 +281,7 @@ const ManufacturerDashboardPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 text-gray-400" />
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -232,7 +290,7 @@ const ManufacturerDashboardPage: React.FC = () => {
               className="relative p-2 rounded-full hover:bg-gray-100 cursor-pointer"
               onClick={() => setShowNotifications(!showNotifications)}
             >
-              <i className="fas fa-bell text-gray-600"></i>
+              <FontAwesomeIcon icon={faBell} className="text-gray-600" />
               <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span>
             </button>
             {showNotifications && (
@@ -264,27 +322,27 @@ const ManufacturerDashboardPage: React.FC = () => {
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
               <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                <i className="fas fa-user"></i>
+                <FontAwesomeIcon icon={faUser} />
               </div>
               <div>
                 <div className="text-sm font-medium">John Smith</div>
                 <div className="text-xs text-gray-500">Vendor Admin</div>
               </div>
-              <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
+              <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-xs" />
             </div>
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
                 <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2">
-                  <i className="fas fa-user-circle text-gray-500"></i>
+                  <FontAwesomeIcon icon={faUserCircle} className="text-gray-500" />
                   <span className="text-sm">Profile</span>
                 </div>
                 <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2">
-                  <i className="fas fa-cog text-gray-500"></i>
+                  <FontAwesomeIcon icon={faCog} className="text-gray-500" />
                   <span className="text-sm">Settings</span>
                 </div>
                 <div className="border-t border-gray-200"></div>
                 <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2 text-red-600">
-                  <i className="fas fa-sign-out-alt"></i>
+                  <FontAwesomeIcon icon={faSignOutAlt} />
                   <button className="text-sm" onClick={() => signOut({ callbackUrl: '/sign-in' })}>Logout</button>
                 </div>
               </div>
@@ -301,7 +359,7 @@ const ManufacturerDashboardPage: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Manufacturer Dashboard</h1>
               <div className="text-sm text-gray-500">
-                <i className="far fa-calendar-alt mr-2"></i>
+                <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
                 Sunday, June 22, 2025
               </div>
             </div>
@@ -315,11 +373,11 @@ const ManufacturerDashboardPage: React.FC = () => {
                     <div className="text-sm text-gray-500 mt-1">Pending Orders</div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
-                    <i className="fas fa-clock text-xl"></i>
+                    <FontAwesomeIcon icon={faClock} className="text-xl" />
                   </div>
                 </div>
                 <div className="text-xs text-green-600 mt-2 flex items-center">
-                  <i className="fas fa-arrow-up mr-1"></i>
+                  <FontAwesomeIcon icon={faArrowUp} className="mr-1" />
                   <span>12% from last month</span>
                 </div>
               </div>
@@ -331,11 +389,11 @@ const ManufacturerDashboardPage: React.FC = () => {
                     <div className="text-sm text-gray-500 mt-1">Shipments in Transit</div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                    <i className="fas fa-truck text-xl"></i>
+                    <FontAwesomeIcon icon={faTruck} className="text-xl" />
                   </div>
                 </div>
                 <div className="text-xs text-blue-600 mt-2 flex items-center">
-                  <i className="fas fa-equals mr-1"></i>
+                  <FontAwesomeIcon icon={faEquals} className="mr-1" />
                   <span>Same as last month</span>
                 </div>
               </div>
@@ -347,11 +405,11 @@ const ManufacturerDashboardPage: React.FC = () => {
                     <div className="text-sm text-gray-500 mt-1">Deliveries Confirmed</div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-500">
-                    <i className="fas fa-check-circle text-xl"></i>
+                    <FontAwesomeIcon icon={faCheckCircle} className="text-xl" />
                   </div>
                 </div>
                 <div className="text-xs text-green-600 mt-2 flex items-center">
-                  <i className="fas fa-arrow-up mr-1"></i>
+                  <FontAwesomeIcon icon={faArrowUp} className="mr-1" />
                   <span>8% from last month</span>
                 </div>
               </div>
@@ -363,11 +421,11 @@ const ManufacturerDashboardPage: React.FC = () => {
                     <div className="text-sm text-gray-500 mt-1">SLA Breaches</div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                    <i className="fas fa-exclamation-triangle text-xl"></i>
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-xl" />
                   </div>
                 </div>
                 <div className="text-xs text-green-600 mt-2 flex items-center">
-                  <i className="fas fa-arrow-down mr-1"></i>
+                  <FontAwesomeIcon icon={faArrowDown} className="mr-1" />
                   <span>2 fewer than last month</span>
                 </div>
               </div>
@@ -377,7 +435,7 @@ const ManufacturerDashboardPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow mb-8">
               <div className="p-5 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center">
-                  <i className="fas fa-hourglass-half text-blue-600 mr-3 text-xl"></i>
+                  <FontAwesomeIcon icon={faHourglassHalf} className="text-blue-600 mr-3 text-xl" />
                   <h2 className="text-lg font-semibold text-gray-800">Next Dispatch Deadline</h2>
                 </div>
                 <div className="bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">
@@ -397,7 +455,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                 </div>
                 <div className="mt-4 md:mt-0">
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center cursor-pointer whitespace-nowrap">
-                    <i className="fas fa-box-open mr-2"></i>
+                    <FontAwesomeIcon icon={faBoxOpen} className="mr-2" />
                     Prepare Shipment
                   </button>
                 </div>
@@ -408,7 +466,7 @@ const ManufacturerDashboardPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow mb-8">
               <div className="p-5 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center">
-                  <i className="fas fa-clipboard-list text-blue-600 mr-3 text-xl"></i>
+                  <FontAwesomeIcon icon={faClipboardList} className="text-blue-600 mr-3 text-xl" />
                   <h2 className="text-lg font-semibold text-gray-800">Recent Orders</h2>
                 </div>
                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer whitespace-nowrap">
@@ -428,49 +486,73 @@ const ManufacturerDashboardPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            order.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                            order.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                            order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                              order.status === 'pending' ? 'bg-orange-500' :
-                              order.status === 'in-progress' ? 'bg-blue-500' :
-                              order.status === 'completed' ? 'bg-green-500' :
-                              'bg-red-500'
-                            }`}></span>
-                            {order.status === 'pending' ? 'Pending' :
-                             order.status === 'in-progress' ? 'In Progress' :
-                             order.status === 'completed' ? 'Completed' :
-                             'Delayed'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{order.customer}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.dispatchDate}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {order.status === 'pending' ? (
-                            <div className="flex justify-end space-x-2">
-                              <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded cursor-pointer whitespace-nowrap">
-                                Accept
+                    {loading ? (
+                      <tr><td colSpan={6} className="text-center py-4">Loading...</td></tr>
+                    ) : orders.length === 0 ? (
+                      <tr><td colSpan={6} className="text-center py-4">No orders found.</td></tr>
+                    ) : (
+                      orders.map((order) => (
+                        <tr key={order._id || order.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.orderId || order._id || order.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              order.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                              order.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
+                                order.status === 'pending' ? 'bg-orange-500' :
+                                order.status === 'in-progress' ? 'bg-blue-500' :
+                                order.status === 'completed' ? 'bg-green-500' :
+                                'bg-red-500'
+                              }`}></span>
+                              {order.status === 'pending' ? 'Pending' :
+                               order.status === 'in-progress' ? 'In Progress' :
+                               order.status === 'completed' ? 'Completed' :
+                               'Delayed'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{order.hospitalName || order.customer || '-'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.orderDate ? new Date(order.orderDate).toLocaleDateString() : '-'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : '-'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            {order.status === 'pending' ? (
+                              <div className="flex justify-end space-x-2">
+                                <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded cursor-pointer whitespace-nowrap" onClick={async () => {
+                                  await fetch('/api/vendor-accept-order', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ orderId: order._id || order.id }),
+                                  });
+                                  // Refresh orders
+                                  setLoading(true);
+                                  setTimeout(() => window.location.reload(), 500);
+                                }}>
+                                  Accept
+                                </button>
+                                <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded cursor-pointer whitespace-nowrap" onClick={async () => {
+                                  await fetch('/api/vendor-reject-order', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ _id: order._id || order.id }),
+                                  });
+                                  // Refresh orders
+                                  setLoading(true);
+                                  setTimeout(() => window.location.reload(), 500);
+                                }}>
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <button className="text-blue-600 hover:text-blue-900 cursor-pointer whitespace-nowrap">
+                                View Details
                               </button>
-                              <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded cursor-pointer whitespace-nowrap">
-                                Reject
-                              </button>
-                            </div>
-                          ) : (
-                            <button className="text-blue-600 hover:text-blue-900 cursor-pointer whitespace-nowrap">
-                              View Details
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -480,7 +562,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                 </div>
                 <div className="flex space-x-2">
                   <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer whitespace-nowrap">
-                    <i className="fas fa-chevron-left"></i>
+                    <FontAwesomeIcon icon={faChevronLeft} />
                   </button>
                   <button className="px-3 py-1 rounded border border-gray-300 bg-blue-600 text-white cursor-pointer whitespace-nowrap">
                     1
@@ -489,10 +571,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                     2
                   </button>
                   <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer whitespace-nowrap">
-                    3
-                  </button>
-                  <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer whitespace-nowrap">
-                    <i className="fas fa-chevron-right"></i>
+                    <FontAwesomeIcon icon={faChevronRight} />
                   </button>
                 </div>
               </div>
@@ -534,7 +613,7 @@ const ManufacturerDashboardPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5">
                 <div className="border border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
                   <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mb-3">
-                    <i className="fas fa-file-invoice text-xl"></i>
+                    <FontAwesomeIcon icon={faFileInvoice} className="text-xl" />
                   </div>
                   <h3 className="text-base font-medium text-gray-800 mb-1">Upload Invoice</h3>
                   <p className="text-sm text-gray-500 text-center mb-3">Drag and drop your invoice PDF or image here</p>
@@ -549,15 +628,16 @@ const ManufacturerDashboardPage: React.FC = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer whitespace-nowrap"
                     onClick={handleInvoiceFileClick}
                   >
-                    <i className="fas fa-upload mr-2"></i>
+                    <FontAwesomeIcon icon={faUpload} className="mr-2" />
                     Select File
                   </button>
                   <div className="text-xs text-gray-500 mt-2">Supported: PDF, JPG, PNG</div>
+                  {uploadMessage && <div className="text-center text-sm mt-2">{uploadMessage}</div>}
                 </div>
 
                 <div className="border border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
                   <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-500 mb-3">
-                    <i className="fas fa-truck-loading text-xl"></i>
+                    <FontAwesomeIcon icon={faTruckLoading} className="text-xl" />
                   </div>
                   <h3 className="text-base font-medium text-gray-800 mb-1">Dispatch Form</h3>
                   <p className="text-sm text-gray-500 text-center mb-3">Enter shipping details and tracking information</p>
@@ -565,7 +645,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded cursor-pointer whitespace-nowrap"
                     onClick={() => setShowDispatchForm(true)}
                   >
-                    <i className="fas fa-pen-alt mr-2"></i>
+                    <FontAwesomeIcon icon={faPenAlt} className="mr-2" />
                     Fill Form
                   </button>
                   <div className="text-xs text-gray-500 mt-2">For orders ready to ship</div>
@@ -573,7 +653,7 @@ const ManufacturerDashboardPage: React.FC = () => {
 
                 <div className="border border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center">
                   <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 mb-3">
-                    <i className="fas fa-clipboard-check text-xl"></i>
+                    <FontAwesomeIcon icon={faClipboardCheck} className="text-xl" />
                   </div>
                   <h3 className="text-base font-medium text-gray-800 mb-1">Delivery Proof</h3>
                   <p className="text-sm text-gray-500 text-center mb-3">Upload signed delivery confirmation documents</p>
@@ -588,10 +668,11 @@ const ManufacturerDashboardPage: React.FC = () => {
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded cursor-pointer whitespace-nowrap"
                     onClick={handleProofFileClick}
                   >
-                    <i className="fas fa-upload mr-2"></i>
+                    <FontAwesomeIcon icon={faUpload} className="mr-2" />
                     Upload Proof
                   </button>
                   <div className="text-xs text-gray-500 mt-2">Required for completed deliveries</div>
+                  {uploadMessage && <div className="text-center text-sm mt-2">{uploadMessage}</div>}
                 </div>
               </div>
             </div>
@@ -609,7 +690,7 @@ const ManufacturerDashboardPage: React.FC = () => {
                 className="text-gray-500 hover:text-gray-700 cursor-pointer"
                 onClick={() => setShowDispatchForm(false)}
               >
-                <i className="fas fa-times"></i>
+                <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
             <div className="p-5">

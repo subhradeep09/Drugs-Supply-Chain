@@ -1,5 +1,7 @@
 'use client';
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTruck, faClock, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
 const mockDispatches = [
   { orderId: 'VORD001', drug: 'Paracetamol 500mg', quantity: 200, status: 'Dispatched', date: '2024-06-01' },
@@ -41,7 +43,12 @@ export default function DispatchStatusPage() {
                 <td className="p-3">{d.orderId}</td>
                 <td className="p-3">{d.drug}</td>
                 <td className="p-3">{d.quantity}</td>
-                <td className="p-3">{d.status}</td>
+                <td className="p-3">
+                  {d.status === 'Dispatched' && <FontAwesomeIcon icon={faTruck} className="text-blue-600 mr-1" />}
+                  {d.status === 'Pending' && <FontAwesomeIcon icon={faClock} className="text-orange-500 mr-1" />}
+                  {d.status === 'Delivered' && <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 mr-1" />}
+                  {d.status}
+                </td>
                 <td className="p-3">{d.date}</td>
               </tr>
             ))}
