@@ -67,8 +67,8 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
     { title: 'Dispatch Status', href: '/dashboard/vendor/DispatchStatus', icon: Truck },
     { title: 'Upload Invoice', href: '/dashboard/vendor/UploadInvoice', icon: FileUp },
     { title: 'Upload POD', href: '/dashboard/vendor/UploadPOD', icon: FileSignature },
-    { title: 'Performance Metrics', href: '/dashboard/vendor/PerformanceMetrics', icon: Activity },
-    { title: 'Shipment Logs', href: '/dashboard/vendor/ShipmentLogs', icon: FileText },
+    { title: 'Performance Metrics', href: '/dashboard/vendor/PerformanceMetrics', icon: PackagePlus },
+    { title: 'Inventory', href: '/dashboard/vendor/Inventory', icon: FileText },
     { title: 'Expiry Logs', href: '/dashboard/vendor/ExpiryLogs', icon: FileText },
   ]
 }

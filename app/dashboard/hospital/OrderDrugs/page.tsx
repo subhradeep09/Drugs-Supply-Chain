@@ -118,7 +118,7 @@ export default function OrderPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Order Medicines</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {medicines.map((medicine) => (
+          {medicines.map((medicine) =>(
             <div key={medicine._id} className="bg-white rounded-lg shadow p-4">
               <img
                 src={medicine.productImage || '/placeholder-medicine.jpg'}
