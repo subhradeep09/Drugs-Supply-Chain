@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import POD from '@/lib/models/pod';
-import Order from '@/lib/models/orderh'; // ⬅ Import hospital orders
+import Order from '@/lib/models/orderh';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
 
@@ -22,25 +22,26 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const orderId = formData.get('orderId')?.toString();
-    const vendorId = formData.get('vendorId')?.toString();
+    const orderIdStr = formData.get('orderId')?.toString(); // 🔗 Order.orderId (UUID)
 
-    if (!file || file.type !== 'application/pdf' || !orderId) {
+    if (!file || file.type !== 'application/pdf' || !orderIdStr) {
       return NextResponse.json({ error: 'Missing or invalid file/orderId' }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     await dbConnect();
 
-    // ⬇ Fetch hospital name from the orderh collection using orderId
-    const order = await Order.findOne({ orderId });
+    // 🔍 Find the order by its string orderId (UUID)
+    const order = await Order.findOne({ orderId: orderIdStr });
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const hospitalName = order.hospitalName;
+    const existingPod = await POD.findOne({ orderId: order._id });
+    if (existingPod) {
+      return NextResponse.json({ error: 'POD already uploaded for this order' }, { status: 409 });
+    }
 
-    // ⬇ Upload PDF to Cloudinary
     const uploaded = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -55,9 +56,8 @@ export async function POST(req: Request) {
 
           try {
             const pod = await POD.create({
-              orderId,
-              hospitalName, // ✅ Store hospital name instead of ID
-              vendorId,
+              orderId: order._id, // ✅ Actual ObjectId
+              hospitalUserId: order.userId, // ✅ Hospital who placed the order
               podUrl: result.secure_url,
             });
             resolve(pod);
