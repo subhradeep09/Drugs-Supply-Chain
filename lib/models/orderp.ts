@@ -5,7 +5,7 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 export interface IPharmacyOrder extends Document {
   userId: Types.ObjectId; // reference to User
   orderId: string;
-  medicineId: string;
+  medicineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine' };
   medicineName: string;
   quantity: number;
   price: number;
@@ -24,7 +24,7 @@ const PharmacyOrderSchema = new Schema<IPharmacyOrder>(
       required: true,
     },
     orderId: String,
-    medicineId: String,
+    medicineId:{type: Schema.Types.ObjectId, ref: 'Medicine', required: true},
     medicineName: String,
     quantity: Number,
     price: Number,
