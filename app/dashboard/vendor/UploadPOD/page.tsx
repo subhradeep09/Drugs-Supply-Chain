@@ -5,18 +5,11 @@ import axios from 'axios';
 
 interface PODType {
   _id: string;
+  orderId: string;
+  hospitalName: string;
+  vendorId: string;
   podUrl: string;
-  uploadedAt: string;
-  orderId: {
-    orderId: string;
-    medicineName: string;
-    hospitalName: string;
-  };
-  hospitalUserId: {
-    _id: string;
-    name: string;
-    organization: string;
-  };
+  uploadedAt: string; // ISO string from MongoDB
 }
 
 export default function ManufacturerView() {
@@ -40,13 +33,13 @@ export default function ManufacturerView() {
     fetchPods();
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 30000);
+    }, 30000); // Update every 30s
     return () => clearInterval(timer);
   }, []);
 
   const getRelativeTime = (uploadedAt: string) => {
     const uploadedDate = new Date(uploadedAt);
-    const diff = Math.floor((now.getTime() - uploadedDate.getTime()) / 1000);
+    const diff = Math.floor((now.getTime() - uploadedDate.getTime()) / 1000); // in seconds
 
     let relative = '';
     if (diff < 10) relative = 'Just now';
@@ -92,6 +85,7 @@ export default function ManufacturerView() {
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Order ID</th>
                   <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Hospital</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Vendor</th>
                   <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">Uploaded</th>
                   <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b">POD File</th>
                 </tr>
@@ -101,8 +95,9 @@ export default function ManufacturerView() {
                   const { relative, fullDateTime } = getRelativeTime(pod.uploadedAt);
                   return (
                     <tr key={pod._id} className="hover:bg-gray-50 transition">
-                      <td className="px-4 py-2 border-b">{pod.orderId.orderId}</td>
-                      <td className="px-4 py-2 border-b">{pod.orderId.hospitalName}</td>
+                      <td className="px-4 py-2 border-b">{pod.orderId}</td>
+                      <td className="px-4 py-2 border-b">{pod.hospitalName}</td>
+                      <td className="px-4 py-2 border-b">{pod.vendorId}</td>
                       <td className="px-4 py-2 border-b text-sm text-gray-600">
                         <div>{relative}</div>
                         <div className="text-xs text-gray-500">{fullDateTime}</div>

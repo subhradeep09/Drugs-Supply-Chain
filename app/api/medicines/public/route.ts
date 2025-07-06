@@ -32,7 +32,13 @@ export async function GET() {
 
     const groupedMap = new Map();
 
-    for (const batch of batches) {
+    for (const batch of batches as Array<any>) {
+      // ✅ Check if population succeeded
+      if (!batch.medicineId || !batch.userId) {
+        console.warn('Skipping batch due to missing populated fields:', batch._id);
+        continue;
+      }
+
       const key = `${batch.medicineId._id}-${batch.userId._id}`;
       const currentOffer = batch.offerPrice;
       const stockQty = batch.stockQuantity;
@@ -75,4 +81,4 @@ export async function GET() {
     console.error('Error:', error);
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
-}
+};

@@ -1,37 +1,26 @@
+// app/api/vendor_pods/route.ts
+
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import dbConnect from '@/lib/db/mongodborder';
 import Pod from '@/lib/models/pod';
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?._id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
+    const pods = await Pod.find({ vendorId: userId });
 
-    const pods = await Pod.find()
-      .populate({
-        path: 'orderId',
-        select: 'orderId hospitalName medicineName',
-      })
-      .populate({
-        path: 'hospitalUserId',
-        select: 'name email organization',
-      })
-      .lean();
-
-    const enrichedPods = pods.map((pod) => ({
-      _id: pod._id,
-      podUrl: pod.podUrl,
-      uploadedAt: pod.uploadedAt,
-      hospital: pod.hospitalUserId?.name || 'Unknown',
-      hospitalEmail: pod.hospitalUserId?.email || '',
-      hospitalOrg: pod.hospitalUserId?.organization || '',
-      orderId: pod.orderId?.orderId || '',
-      hospitalName: pod.orderId?.hospitalName || '',
-      medicineName: pod.orderId?.medicineName || '',
-    }));
-
-    return NextResponse.json(enrichedPods);
-  } catch (error) {
-    console.error('Error in get_pods:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(pods, { status: 200 });
+  } catch (err) {
+    console.error('Vendor POD fetch error:', err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

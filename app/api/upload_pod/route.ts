@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import dbConnect from '@/lib/db/mongodborder';
-import POD from '@/lib/models/pod';
-import Order from '@/lib/models/orderh';
+import  Pod from '@/lib/models/pod';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
+import { User } from '@/lib/models/User';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
@@ -11,68 +13,66 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-function bufferToStream(buffer: Buffer) {
-  const readable = new Readable();
-  readable.push(buffer);
-  readable.push(null);
-  return readable;
-}
-
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?._id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const orderIdStr = formData.get('orderId')?.toString(); // 🔗 Order.orderId (UUID)
+    const orderId = formData.get('orderId') as string;
+    const hospitalName = formData.get('hospitalId') as string;
+    const vendorId = formData.get('vendorId') as string;
 
-    if (!file || file.type !== 'application/pdf' || !orderIdStr) {
-      return NextResponse.json({ error: 'Missing or invalid file/orderId' }, { status: 400 });
+    if (!file || !orderId || !hospitalName || !vendorId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // ✅ Find hospital user based on name
     await dbConnect();
-
-    // 🔍 Find the order by its string orderId (UUID)
-    const order = await Order.findOne({ orderId: orderIdStr });
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    const hospitalUser = await User.findOne({ name: hospitalName });
+    if (!hospitalUser) {
+      return NextResponse.json({ error: 'Hospital user not found' }, { status: 404 });
     }
 
-    const existingPod = await POD.findOne({ orderId: order._id });
-    if (existingPod) {
-      return NextResponse.json({ error: 'POD already uploaded for this order' }, { status: 409 });
-    }
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    const uploaded = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'pod_files',
-          resource_type: 'raw',
-          format: 'pdf',
-        },
-        async (error, result) => {
-          if (error || !result?.secure_url) {
-            return reject(error || new Error('Cloudinary upload failed'));
-          }
-
-          try {
-            const pod = await POD.create({
-              orderId: order._id, // ✅ Actual ObjectId
-              hospitalUserId: order.userId, // ✅ Hospital who placed the order
-              podUrl: result.secure_url,
-            });
-            resolve(pod);
-          } catch (err) {
-            reject(err);
-          }
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: 'raw', folder: 'pods', format: 'pdf' },
+      async (error, result) => {
+        if (error || !result) {
+          console.error('Cloudinary upload error:', error);
+          return NextResponse.json({ error: 'Cloudinary upload failed' }, { status: 500 });
         }
-      );
 
-      bufferToStream(buffer).pipe(uploadStream);
+        const podData = {
+          orderId,
+          hospitalName,
+          hospitaluserId: hospitalUser._id, // ✅ ADD THIS FIELD
+          vendorId,
+          podUrl: result.secure_url,
+        };
+
+        const pod = new Pod(podData);
+        await pod.save();
+
+        return NextResponse.json({ message: 'POD uploaded successfully' }, { status: 200 });
+      }
+    );
+
+    Readable.from(buffer).pipe(stream);
+    return new Promise((resolve) => {
+      stream.on('end', () => {
+        resolve(new Response('OK', { status: 200 }));
+      });
     });
-
-    return NextResponse.json({ pod: uploaded }, { status: 200 });
-  } catch (err: any) {
-    console.error('Upload error:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+  } catch (err) {
+    console.error('Upload Error:', err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
