@@ -31,7 +31,6 @@ export default function PerformanceMatrix() {
   const [orderStatusData, setOrderStatusData] = useState<OrderStatusData[]>([]);
 
   useEffect(() => {
-    // Inventory API
     fetch("/api/vendor-inventory")
       .then((res) => res.json())
       .then((data) => {
@@ -44,7 +43,6 @@ export default function PerformanceMatrix() {
       })
       .catch((err) => console.error("Failed to load inventory data", err));
 
-    // Orders API
     const fetchOrders = async () => {
       try {
         const resPending = await fetch("/api/vendor-received-orders");
@@ -53,7 +51,7 @@ export default function PerformanceMatrix() {
         const resDispatched = await fetch("/api/vendor-request-delivery");
         const dispatchedOrders = resDispatched.ok ? await resDispatched.json() : [];
 
-        const resDelivered = await fetch("/api/delivered_orders");
+        const resDelivered = await fetch("/api/vendor-invoice");
         const deliveredOrders = resDelivered.ok ? await resDelivered.json() : [];
 
         setOrderStatusData([
@@ -69,33 +67,37 @@ export default function PerformanceMatrix() {
     fetchOrders();
   }, []);
 
-  const COLORS = ["#FFBB28", "#8884d8", "#00C49F"];
+  const COLORS = ["#fbbf24", "#818cf8", "#34d399"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
-      <h1 className="text-4xl font-bold text-blue-800 mb-10 text-center">
-        📈 Inventory & Orders Performance Matrix
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-50 p-6">
+      <h1 className="text-4xl md:text-5xl font-extrabold text-center text-indigo-700 mb-12 drop-shadow-sm tracking-tight">
+         Performance Matrix
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Stock Levels */}
-        <div className="bg-white shadow-xl rounded-2xl p-6 border border-blue-100 hover:shadow-2xl transition-all">
-          <h2 className="text-2xl font-semibold mb-6 text-blue-700 border-b pb-2">Stock Levels by Medicine</h2>
+        <div className="bg-white/70 backdrop-blur-md shadow-2xl border border-blue-200 rounded-3xl p-8 transition hover:scale-[1.01] duration-300 ease-in-out">
+          <h2 className="text-xl md:text-2xl font-bold text-blue-800 mb-6 border-b border-blue-200 pb-2">
+             Stock Levels by Medicine
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={inventoryData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+            <BarChart data={inventoryData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="4 4" stroke="#d1d5db" />
               <XAxis dataKey="brandName" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip cursor={{ fill: '#f0f0f0' }} />
-              <Legend wrapperStyle={{ fontSize: '14px' }} />
-              <Bar dataKey="totalStock" fill="#4f46e5" radius={[5, 5, 0, 0]} />
+              <Tooltip contentStyle={{ fontSize: "14px", borderRadius: "8px" }} />
+              <Legend wrapperStyle={{ fontSize: "14px" }} />
+              <Bar dataKey="totalStock" fill="#6366f1" radius={[10, 10, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Order Status Pie */}
-        <div className="bg-white shadow-xl rounded-2xl p-6 border border-blue-100 hover:shadow-2xl transition-all">
-          <h2 className="text-2xl font-semibold mb-6 text-blue-700 border-b pb-2"> Order Status Overview</h2>
+        {/* Order Status */}
+        <div className="bg-white/70 backdrop-blur-md shadow-2xl border border-blue-200 rounded-3xl p-8 transition hover:scale-[1.01] duration-300 ease-in-out">
+          <h2 className="text-xl md:text-2xl font-bold text-blue-800 mb-6 border-b border-blue-200 pb-2">
+             Order Status Overview
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -112,8 +114,8 @@ export default function PerformanceMatrix() {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: '14px' }} />
+              <Tooltip contentStyle={{ fontSize: "14px", borderRadius: "8px" }} />
+              <Legend wrapperStyle={{ fontSize: "14px" }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
