@@ -18,4 +18,4 @@ const DispenseLogSchema = new Schema({
 });
 
 export default mongoose.models.DispenseLog ||
-  mongoose.model('DispenseLog', DispenseLogSchema);
+  mongoose.model('DispenseLog', DispenseLogSchema);        
