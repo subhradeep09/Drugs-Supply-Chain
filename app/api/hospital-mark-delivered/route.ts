@@ -1,16 +1,16 @@
-// /app/api/hospital/mark-delivered/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
+import HospitalInventory from '@/lib/models/Hospital-Inventory';
 
 export async function POST(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  if (!user) {
+  if (!user || !user._id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -18,13 +18,64 @@ export async function POST(req: NextRequest) {
     const { orderId } = await req.json();
 
     const order = await Order.findOneAndUpdate(
-      { orderId, userId: user._id, manufacturerStatus: 'Out for Delivery' },
+      {
+        orderId,
+        userId: user._id,
+        manufacturerStatus: 'Out for Delivery',
+      },
       { manufacturerStatus: 'Delivered' },
       { new: true }
     );
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found or already delivered' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Order not found or already delivered' },
+        { status: 404 }
+      );
+    }
+
+    const today = new Date();
+
+    for (const batch of order.dispatchedBatches) {
+      const batchQty = Number(batch.quantity);
+
+      // Skip expired or invalid batches
+      if (new Date(batch.expiryDate) < today || !batchQty || isNaN(batchQty)) continue;
+
+      const batchPayload = {
+        batchNumber: batch.batchNumber,
+        quantity: batchQty,
+        expiryDate: batch.expiryDate,
+      };
+
+      const inventory = await HospitalInventory.findOne({
+        hospitalId: order.userId,
+        medicineId: order.medicineId,
+      });
+
+      if (!inventory) {
+        // No inventory entry exists — create new
+        await HospitalInventory.create({
+          hospitalId: order.userId,
+          medicineId: order.medicineId,
+          totalStock: batchQty,
+          lastOrderedDate: order.deliveryDate,
+          batches: [batchPayload],
+        });
+      } else {
+        // Push new batch (do not merge)
+        inventory.batches.push(batchPayload);
+        inventory.totalStock += batchQty;
+
+        if (
+          !inventory.lastOrderedDate ||
+          new Date(order.deliveryDate) > new Date(inventory.lastOrderedDate)
+        ) {
+          inventory.lastOrderedDate = order.deliveryDate;
+        }
+
+        await inventory.save();
+      }
     }
 
     return NextResponse.json({ success: true, order });

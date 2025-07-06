@@ -2,61 +2,81 @@
 
 import { useEffect, useState } from 'react';
 
-interface DispenseRecord {
+interface DispenseLog {
   _id: string;
-  medicineName: string;
   quantity: number;
+  dispensedAt: string;
   recipient: string;
-  date: string;
+  medicineId: {
+    brandName: string;
+    genericName?: string;
+  };
 }
 
-export default function UsagePage() {
-  const [records, setRecords] = useState<DispenseRecord[]>([]);
+export default function DispenseLogsPage() {
+  const [logs, setLogs] = useState<DispenseLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/hospital-dispense-history')
-      .then(res => res.json())
-      .then(data => {
-        setRecords(data);
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch('/api/hospital-dispense-logs');
+        const data = await res.json();
+        setLogs(data.logs || []);
+      } catch (err) {
+        console.error('Failed to fetch logs', err);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch history:', err);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchLogs();
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Dispense History</h1>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">🧾 Dispense Logs</h1>
 
       {loading ? (
-        <p>Loading...</p>
-      ) : records.length === 0 ? (
-        <p className="text-gray-500">No dispense records found.</p>
+        <p className="text-gray-500">Loading logs...</p>
+      ) : logs.length === 0 ? (
+        <p className="text-gray-600">No dispense logs available.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white shadow-md rounded-xl">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-2 px-4 text-left">Medicine</th>
-                <th className="py-2 px-4 text-left">Quantity</th>
-                <th className="py-2 px-4 text-left">Recipient</th>
-                <th className="py-2 px-4 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.map((r) => (
-                <tr key={r._id} className="border-t hover:bg-gray-50">
-                  <td className="py-2 px-4">{r.medicineName}</td>
-                  <td className="py-2 px-4">{r.quantity}</td>
-                  <td className="py-2 px-4">{r.recipient}</td>
-                  <td className="py-2 px-4">{new Date(r.date).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-6">
+          {logs.map((log) => (
+            <div
+              key={log._id}
+              className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 transition hover:shadow-lg"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <div className="text-xl font-semibold text-gray-800">
+                    {log.medicineId.brandName}
+                    <span className="text-sm text-gray-500 ml-2">
+                      ({log.medicineId.genericName || 'Generic'})
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Recipient:{' '}
+                    <span className="font-medium">{log.recipient}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Dispensed on:{' '}
+                    {new Date(log.dispensedAt).toLocaleString('en-IN', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-base text-gray-600">Total</span>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {log.quantity} <span className="text-sm text-gray-500">units</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

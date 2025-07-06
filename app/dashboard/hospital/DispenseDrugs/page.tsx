@@ -1,99 +1,105 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 
-interface Drug {
-  _id: string;
+interface Medicine {
+  inventoryId: string;       // HospitalInventory._id
+  medicineId: string;        // Actual reference to Medicine._id
   medicineName: string;
-  totalDelivered: number;
+  totalStock: number;
+  lastOrderedDate: string;
 }
 
 export default function DispenseDrugsPage() {
-  const [drugs, setDrugs] = useState<Drug[]>([]);
-  const [selected, setSelected] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [selectedMedicineId, setSelectedMedicineId] = useState<string>('');
+  const [quantity, setQuantity] = useState<number>(0);
   const [recipient, setRecipient] = useState('');
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchDrugs = async () => {
-      const res = await fetch('/api/hospital-dispense');
+    const fetchInventory = async () => {
+      const res = await fetch('/api/hospital-inventory');
       const data = await res.json();
-      setDrugs(data);
+      if (Array.isArray(data)) {
+        setMedicines(data);
+      } else {
+        console.error('Inventory format invalid', data);
+      }
     };
-    fetchDrugs();
+    fetchInventory();
   }, []);
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setMessage('');
-    setError('');
 
-    try {
-      const res = await fetch('/api/hospital-dispense', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ drugId: selected, quantity, recipient })
-      });
+    if (!selectedMedicineId || quantity <= 0 || !recipient.trim()) {
+      setMessage('All fields are required.');
+      return;
+    }
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
-      setMessage(result.message);
-    } catch (err: any) {
-      setError(err.message);
+    const res = await fetch('/api/hospital-dispense', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medicineId: selectedMedicineId, quantity, recipient }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setMessage('✅ Dispensed successfully!');
+      setQuantity(0);
+      setRecipient('');
+    } else {
+      setMessage(data.error || 'Something went wrong.');
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Dispense Drugs</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-        <select className="input" onChange={e => setSelected(e.target.value)} value={selected}>
-          <option value="">Select Drug</option>
-          {drugs.map(d => (
-            <option key={d.medicineName} value={d.medicineName}>
-              {d.medicineName} (Stock: {d.totalDelivered})
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          className="input"
-          value={quantity}
-          onChange={e => setQuantity(Number(e.target.value))}
-          min={1}
-          required
-        />
-        <input
-          type="text"
-          className="input"
-          value={recipient}
-          onChange={e => setRecipient(e.target.value)}
-          placeholder="Recipient"
-          required
-        />
-        <button className="btn-primary">Dispense</button>
-        {message && <p className="text-green-600">{message}</p>}
-        {error && <p className="text-red-600">{error}</p>}
-      </form>
+    <div className="max-w-xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4 text-center text-blue-800">💊 Dispense Drugs</h1>
 
-      <h2 className="text-lg font-semibold">Available Medicines</h2>
-      <ul className="list-disc pl-6 mt-2">
-        {drugs.map(d => (
-          <li key={d._id}>
-            {d.medicineName} – {d.totalDelivered} units
-          </li>
+      <label className="block mb-2 font-medium">Select Medicine</label>
+      <select
+        value={selectedMedicineId}
+        onChange={(e) => setSelectedMedicineId(e.target.value)}
+        className="w-full p-2 mb-4 border border-gray-300 rounded"
+      >
+        <option value="">-- Choose Medicine --</option>
+        {medicines.map((med) => (
+          <option key={med.inventoryId} value={med.medicineId}>
+            {med.medicineName} — {med.totalStock} in stock
+          </option>
         ))}
-      </ul>
+      </select>
 
-      <style jsx>{`
-        .input {
-          @apply w-full border rounded px-3 py-2;
-        }
-        .btn-primary {
-          @apply bg-blue-600 text-white px-4 py-2 rounded;
-        }
-      `}</style>
+      <label className="block mb-2 font-medium">Quantity</label>
+      <input
+        type="number"
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+        placeholder="Enter quantity"
+        className="w-full p-2 mb-4 border border-gray-300 rounded"
+      />
+
+      <label className="block mb-2 font-medium">Recipient</label>
+      <input
+        type="text"
+        value={recipient}
+        onChange={(e) => setRecipient(e.target.value)}
+        placeholder="Enter recipient name"
+        className="w-full p-2 mb-4 border border-gray-300 rounded"
+      />
+
+      <button
+        onClick={handleSubmit}
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+      >
+        Dispense
+      </button>
+
+      {message && (
+        <p className="mt-4 text-center text-sm text-red-600 font-medium">{message}</p>
+      )}
     </div>
   );
 }

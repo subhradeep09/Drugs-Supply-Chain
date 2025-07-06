@@ -1,77 +1,51 @@
+// /app/api/hospital-expiry-logs/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodborder';
-import HospitalOrder from '@/lib/models/orderh';
-import DispenseLog from '@/lib/models/dispenseLog';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import mongoose from 'mongoose';
+import dbConnect from '@/lib/db/mongodborder';
+import HospitalInventory from '@/lib/models/Hospital-Inventory';
 
-export async function POST(req: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);
-  const { drugId, quantity, recipient } = await req.json();
+  const user = session?.user;
 
-  if (!session?.user?._id) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  if (!user || !user._id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
-  if (!drugId || !quantity || !recipient) {
-    return NextResponse.json({ message: 'Missing fields' }, { status: 400 });
-  }
-
-  const userId = new mongoose.Types.ObjectId(session.user._id);
-  const today = new Date();
 
   try {
-    // Get all valid (delivered + non-expired) batches for this drug
-    const orders = await HospitalOrder.find({
-      userId,
-      medicineId: new mongoose.Types.ObjectId(drugId),
-      manufacturerStatus: 'Delivered',
-      'dispatchedBatches.expiryDate': { $gte: today }
-    });
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    // Flatten and filter valid batches
-    const validBatches = orders
-      .flatMap(o => o.dispatchedBatches.map(b => ({
-        ...b.toObject(),
-        orderId: o._id
-      })))
-      .filter(b => new Date(b.expiryDate) >= today);
+    const inventory = await HospitalInventory.find({ hospitalId: user._id })
+      .populate('medicineId', 'brandName genericName')
+      .lean();
 
-    const totalAvailable = validBatches.reduce((sum, b) => sum + b.quantity, 0);
-    if (quantity > totalAvailable) {
-      return NextResponse.json({ message: 'Insufficient stock' }, { status: 400 });
+    const expiredBatches: any[] = [];
+
+    for (const item of inventory) {
+      for (const batch of item.batches || []) {
+        const expiry = new Date(batch.expiryDate);
+        if (expiry < new Date() && expiry > sixMonthsAgo) {
+          expiredBatches.push({
+            _id: item._id.toString(),
+            medicineName: item.medicineId?.brandName || 'Unknown',
+            genericName: item.medicineId?.genericName || '',
+            batchNumber: batch.batchNumber,
+            quantity: batch.quantity,
+            expiryDate: expiry,
+          });
+        }
+      }
     }
 
-    // Deduct FIFO-wise
-    let remaining = quantity;
-    for (const batch of validBatches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())) {
-      if (remaining === 0) break;
-      const deductQty = Math.min(batch.quantity, remaining);
-
-      await HospitalOrder.updateOne(
-        { _id: batch.orderId, 'dispatchedBatches._id': batch._id },
-        { $inc: { 'dispatchedBatches.$.quantity': -deductQty } }
-      );
-
-      remaining -= deductQty;
-    }
-
-    const medicineName = orders[0]?.medicineName || 'Unknown';
-
-    await DispenseLog.create({
-      userId,
-      medicineId: drugId,
-      medicineName,
-      quantity,
-      recipient,
-      date: new Date()
-    });
-
-    return NextResponse.json({ message: 'Dispensed successfully' });
-  } catch (err) {
-    console.error('DISPENSE_ERROR', err);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ expired: expiredBatches }, { status: 200 });
+  } catch (error) {
+    console.error('[EXPIRY_LOGS_ERROR]', error);
+    return NextResponse.json({ error: 'Failed to fetch expiry logs' }, { status: 500 });
   }
 }
