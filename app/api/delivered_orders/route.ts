@@ -1,15 +1,28 @@
-// ✅ API route: /app/api/get_delivered_orders/route.ts
+import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
-import Order from '@/lib/models/orderh';
+import Order from '@/lib/models/orderh'; // replace with your actual path
 
-export async function GET() {
+export async function GET(req: Request) {
+  const session = await getServerSession(); // ensure NextAuth is configured
+
+  if (!session || !session.user?.name) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const hospitalName = session.user.name; // or use session.user.email or id based on your setup
+
   try {
     await dbConnect();
-    const deliveredOrders = await Order.find({ manufacturerStatus: 'delivered' });
-    return NextResponse.json(deliveredOrders);
-  } catch (error: any) {
-    console.error('Error fetching delivered orders:', error);
-    return NextResponse.json({ error: 'Failed to fetch delivered orders' }, { status: 500 });
+
+    const orders = await Order.find({
+      hospitalName,
+      manufacturerStatus: 'Delivered',
+    });
+
+    return NextResponse.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return NextResponse.json({ message: 'Error fetching orders' }, { status: 500 });
   }
 }
