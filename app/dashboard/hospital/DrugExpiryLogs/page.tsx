@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 
 interface ExpiredBatch {
-  orderId: string;
+  _id: string;
   medicineName: string;
+  genericName: string;
   batchNumber: string;
   quantity: number;
   expiryDate: string;
-  deliveryDate: string;
 }
 
 export default function ExpiryLogsPage() {
@@ -16,53 +16,55 @@ export default function ExpiryLogsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/hospital-expiry-logs')
-      .then((res) => res.json())
-      .then((data) => {
-        setLogs(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch('/api/hospital-expiry-logs');
+        const data = await res.json();
+        setLogs(data.expired || []);
+      } catch (err) {
         console.error('Failed to fetch expiry logs:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchLogs();
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">🧾 Expired Medicine Logs (Last 6 Months)</h1>
+    <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">🧾 Expired Batches (Last 6 Months)</h1>
 
       {loading ? (
-        <p>Loading...</p>
+        <p className="text-center text-gray-500">Loading...</p>
       ) : logs.length === 0 ? (
-        <p className="text-gray-500">No expired medicines in the last 6 months.</p>
+        <p className="text-center text-gray-600">No expired batches found.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white shadow-md rounded-lg">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2 text-left">Order ID</th>
-                <th className="px-4 py-2 text-left">Medicine</th>
-                <th className="px-4 py-2 text-left">Batch Number</th>
-                <th className="px-4 py-2 text-left">Quantity</th>
-                <th className="px-4 py-2 text-left">Expiry Date</th>
-                <th className="px-4 py-2 text-left">Delivered On</th>
+        <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 text-left text-sm font-semibold">
+            <tr>
+              <th className="py-2 px-4">Medicine</th>
+              <th className="py-2 px-4">Batch No.</th>
+              <th className="py-2 px-4">Quantity</th>
+              <th className="py-2 px-4">Expired On</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log, i) => (
+              <tr key={i} className="border-t text-sm">
+                <td className="py-2 px-4">
+                  <span className="font-semibold text-gray-800">{log.medicineName}</span>
+                  <span className="text-gray-500"> ({log.genericName})</span>
+                </td>
+                <td className="py-2 px-4">{log.batchNumber}</td>
+                <td className="py-2 px-4">{log.quantity}</td>
+                <td className="py-2 px-4 text-red-600">
+                  {new Date(log.expiryDate).toLocaleDateString('en-IN')}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {logs.map((log, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2 font-mono text-xs">{log.orderId}</td>
-                  <td className="px-4 py-2">{log.medicineName}</td>
-                  <td className="px-4 py-2">{log.batchNumber}</td>
-                  <td className="px-4 py-2">{log.quantity}</td>
-                  <td className="px-4 py-2 text-red-600">{log.expiryDate}</td>
-                  <td className="px-4 py-2">{log.deliveryDate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
