@@ -5,14 +5,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Card,
+  CardContent,
   CardTitle,
   CardDescription,
-  CardContent,
 } from "@/app/ui/card";
 import { Input } from "@/app/ui/input";
 import { Button } from "@/app/ui/button";
 import { Label } from "@/app/ui/label";
-import { UploadCloud, LogOut, Loader2, CheckCircle2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  UploadCloud,
+  LogOut,
+  Loader2,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 
 export default function ApplyVerificationPage() {
   const { data: session, status } = useSession();
@@ -51,7 +59,6 @@ export default function ApplyVerificationPage() {
       try {
         const res = await fetch("/api/verification/status");
         const data = await res.json();
-
         if (data.applicationStatus === "APPROVED") {
           const role = session.user.role?.toLowerCase() || "";
           router.push(`/dashboard/${role}`);
@@ -91,45 +98,31 @@ export default function ApplyVerificationPage() {
     }
   };
 
-  const removeFile = (fileType) => {
-    setFormData((prev) => ({ ...prev, [fileType]: null }));
-    setUploadedFiles((prev) => ({ ...prev, [fileType]: null }));
-    // Reset the file input
-    document.getElementById(fileType).value = "";
+  const removeFile = (name) => {
+    setFormData((prev) => ({ ...prev, [name]: null }));
+    setUploadedFiles((prev) => ({ ...prev, [name]: null }));
+    document.getElementById(name).value = "";
   };
 
-  const nextStep = () => {
-    setStep((prev) => Math.min(prev + 1, 3));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const prevStep = () => {
-    setStep((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatusMsg("");
-
     try {
       const form = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value) form.append(key, value);
       });
-
       const res = await fetch("/api/verification/apply", {
         method: "POST",
         body: form,
       });
-
       const data = await res.json();
-      if (res.ok) {
-        router.push("/application-status");
-      } else {
-        setStatusMsg(`❌ ${data.message || "Submission failed"}`);
-      }
+      if (res.ok) router.push("/application-status");
+      else setStatusMsg(`\u274c ${data.message || "Submission failed"}`);
     } catch {
       setStatusMsg("\u274c Network error. Please try again.");
     } finally {
@@ -137,268 +130,198 @@ export default function ApplyVerificationPage() {
     }
   };
 
-  if (status === "loading" || checking) {
+  const renderFileUpload = (name, label, required = true) => {
+    const file = uploadedFiles[name];
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white dark:from-zinc-900 dark:to-zinc-800">
-        <div className="flex flex-col items-center justify-center space-y-4 p-8 rounded-xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-gray-200 dark:border-zinc-700 shadow-lg">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-600 dark:text-indigo-400" />
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Checking verification status...</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">This won't take long</p>
-        </div>
+      <div className="space-y-2">
+        <Label className="text-gray-700 dark:text-gray-300 font-medium">{label} {required && <span className="text-red-500">*</span>}</Label>
+        <label className={`flex flex-col items-center justify-center w-full min-h-32 border-2 ${file ? 'border-indigo-300 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-dashed border-gray-300 dark:border-zinc-600'} rounded-xl bg-white/50 dark:bg-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-all duration-200 group`}>
+          <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+            {file ? (
+              <div className="flex flex-col items-center">
+                <div className="flex items-center bg-white dark:bg-zinc-700 rounded-lg px-3 py-2 mb-2 w-full max-w-xs">
+                  <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">{file.name}</span>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(name); }} className="ml-2 text-gray-400 hover:text-red-500">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400">Click to change file</span>
+              </div>
+            ) : (
+              <>
+                <UploadCloud className="w-8 h-8 mb-3 text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">PDF, JPG, PNG (MAX. 5MB)</p>
+              </>
+            )}
+          </div>
+          <Input type="file" id={name} name={name} onChange={handleFileChange} required={required && !file} className="hidden" />
+        </label>
+      </div>
+    );
+  };
+
+  const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
+
+// Replace your existing `renderStep()` with this
+const renderStep = () => {
+  const leftPanel = (
+    <div className="bg-indigo-50 dark:bg-zinc-800 flex flex-col items-center justify-start p-6 relative space-y-4">
+      <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" alt="PharmaChain Logo" className="w-32 h-32 object-contain mt-4" />
+      <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/823dd0f268f3b6a3cdbe389d8a47602d9f6a5bb4/verificationpage.png" alt="Verification" className="w-11/10 max-h-96 object-contain -mt-6 scale-110" />
+      <h2 className="text-xl text-center font-semibold text-indigo-700 dark:text-indigo-300 mt-4">Begin Your Verification</h2>
+      <p className="text-sm text-center text-gray-600 dark:text-gray-400 max-w-xs">Fill out your personal details to get started.</p>
+    </div>
+  );
+
+  const rightPanel = (content, title) => (
+    <div className="p-6 sm:p-10 space-y-8 bg-gradient-to-br from-white via-indigo-50 to-purple-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h3>
+      {content}
+    </div>
+  );
+
+  const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
+
+  const containerStyle = "grid grid-cols-1 md:grid-cols-2 min-h-[70vh] rounded-2xl overflow-hidden shadow-xl";
+
+  if (step === 1) {
+    return (
+      <div className={containerStyle}>
+        {leftPanel}
+        {rightPanel(
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <Input name="name" value={formData.name} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input name="email" value={formData.email} readOnly className="px-4 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 cursor-not-allowed text-gray-600 dark:text-gray-400" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+              <div className="space-y-2">
+                <Label>Designation</Label>
+                <Input name="designation" value={formData.designation} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+            </div>
+          </div>,
+          " Personal Information"
+        )}
       </div>
     );
   }
 
-  const renderFileUpload = (name, label, required = true) => {
-    const file = uploadedFiles[name];
-    
+  if (step === 2) {
     return (
-      <div className="space-y-2">
-        <Label className="text-gray-700 dark:text-gray-300 font-medium">
-          {label} {required && <span className="text-red-500">*</span>}
-        </Label>
-        <div className="flex items-center justify-center w-full">
-          <label className={`flex flex-col items-center justify-center w-full min-h-32 border-2 ${file ? 'border-indigo-300 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-dashed border-gray-300 dark:border-zinc-600'} rounded-xl bg-white/50 dark:bg-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-all duration-200 group`}>
-            <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
-              {file ? (
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center bg-white dark:bg-zinc-700 rounded-lg px-3 py-2 mb-2 w-full max-w-xs">
-                    <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">
-                      {file.name}
-                    </span>
-                    <button 
-                      type="button" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(name);
-                      }}
-                      className="ml-2 text-gray-400 hover:text-red-500"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <span className="text-xs text-indigo-600 dark:text-indigo-400">Click to change file</span>
-                </div>
-              ) : (
-                <>
-                  <UploadCloud className="w-8 h-8 mb-3 text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">PDF, JPG, PNG (MAX. 5MB)</p>
-                </>
-              )}
+      <div className={containerStyle}>
+        {leftPanel}
+        {rightPanel(
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Organization</Label>
+                <Input name="organization" value={formData.organization} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+              <div className="space-y-2">
+                <Label>License Number</Label>
+                <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} required className={commonInputStyle} />
+              </div>
             </div>
-            <Input 
-              type="file" 
-              id={name}
-              name={name} 
-              onChange={handleFileChange} 
-              required={required && !file}
-              className="hidden" 
-            />
-          </label>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>License Type</Label>
+                <Input name="licenseType" value={formData.licenseType} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+              <div className="space-y-2">
+                <Label>Issued By</Label>
+                <Input name="licenseIssuedBy" value={formData.licenseIssuedBy} onChange={handleChange} required className={commonInputStyle} />
+              </div>
+            </div>
+          </div>,
+          " License Information"
+        )}
       </div>
     );
-  };
+  }
 
-  const renderStep = () => {
-    const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
+  if (step === 3) {
+    return (
+      <div className={containerStyle}>
+        {leftPanel}
+        {rightPanel(
+          <div className="space-y-6">
+            {renderFileUpload("idProofFile", "ID Proof")}
+            {renderFileUpload("licenseCertificateFile", "License Certificate")}
+            {renderFileUpload("addressProofFile", "Address Proof (Optional)", false)}
+          </div>,
+          " Document Upload"
+        )}
+      </div>
+    );
+  }
+};
 
-    if (step === 1) {
-      return (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Full Name</Label>
-              <Input 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Email</Label>
-              <Input 
-                name="email" 
-                value={formData.email} 
-                readOnly 
-                className="bg-gray-100 dark:bg-zinc-700 cursor-not-allowed text-gray-600 dark:text-gray-400 px-4 py-3 rounded-xl" 
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Phone Number</Label>
-              <Input 
-                name="phoneNumber" 
-                value={formData.phoneNumber} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Designation</Label>
-              <Input 
-                name="designation" 
-                value={formData.designation} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    } else if (step === 2) {
-      return (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Organization</Label>
-              <Input 
-                name="organization" 
-                value={formData.organization} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">License Number</Label>
-              <Input 
-                name="licenseNumber" 
-                value={formData.licenseNumber} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">License Type</Label>
-              <Input 
-                name="licenseType" 
-                value={formData.licenseType} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 dark:text-gray-300 font-medium">Issued By</Label>
-              <Input 
-                name="licenseIssuedBy" 
-                value={formData.licenseIssuedBy} 
-                onChange={handleChange} 
-                required 
-                className={commonInputStyle}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    } else if (step === 3) {
-      return (
-        <div className="space-y-8">
-          {renderFileUpload("idProofFile", "ID Proof")}
-          {renderFileUpload("licenseCertificateFile", "License Certificate")}
-          {renderFileUpload("addressProofFile", "Address Proof (Optional)", false)}
-        </div>
-      );
-    }
-  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
-      <Card className="w-full max-w-3xl rounded-2xl shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border border-gray-200 dark:border-zinc-700 overflow-hidden transition-all duration-300 hover:shadow-2xl">
-        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Verification Application</CardTitle>
-            <CardDescription className="text-indigo-100">Complete your profile to access all features</CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="bg-white/10 px-3 py-1 rounded-full text-xs font-medium">
-              Step {step} of 3
-            </div>
-            <Button 
-              variant="ghost" 
-              onClick={() => signOut({ callbackUrl: "/sign-in" })} 
-              className="hover:bg-white/10 text-white"
-            >
-              <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </Button>
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-white dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 p-4">
+
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <img
+            src="https://www.transparenttextures.com/patterns/cubes.png"
+            alt=""
+            className="w-full h-full object-cover"
+          />
         </div>
-
-        <CardContent className="p-6 sm:p-8 space-y-6">
-          <div className="w-full bg-gray-200 dark:bg-zinc-700 h-2.5 rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-500 ease-out ${
-                step === 1 ? "w-1/3 bg-indigo-500" : 
-                step === 2 ? "w-2/3 bg-purple-500" : 
-                "w-full bg-pink-500"
-              }`}
-            ></div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {renderStep()}
-
-            {statusMsg && (
-              <div className={`p-4 rounded-lg text-sm font-medium transition-all duration-300 ${
-                statusMsg.includes("\u274c")
-                  ? "bg-red-100/80 dark:bg-red-900/50 text-red-700 dark:text-red-200"
-                  : "bg-green-100/80 dark:bg-green-900/50 text-green-700 dark:text-green-200"
-              }`}>
-                {statusMsg.replace("\u274c", "").trim()}
-              </div>
-            )}
-
-            <div className="flex justify-between items-center pt-4">
-              {step > 1 ? (
-                <Button 
-                  type="button" 
-                  onClick={prevStep} 
-                  variant="outline" 
-                  className="gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Back
-                </Button>
-              ) : (
-                <div></div> // Empty div to maintain space
-              )}
-              
-              {step < 3 ? (
-                <Button 
-                  type="button" 
-                  onClick={nextStep} 
-                  className="ml-auto gap-1 bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Next <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button 
-                  type="submit" 
-                  className="ml-auto bg-gradient-to-r from-indigo-600 to-pink-600 text-white hover:from-indigo-700 hover:to-pink-700 shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 gap-1"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
-                  ) : (
-                    <>
-                      Submit Application <CheckCircle2 className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              )}
+      <Card className="relative w-full max-w-3xl shadow-lg z-10">
+        <CardContent>
+          <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-white mb-4"></CardTitle>
+          {checking ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
             </div>
-          </form>
+          ) : (
+            <>
+              {renderStep()}
+              
+                <div className={`flex mt-6 ${step === 1 ? "justify-end" : "justify-between"}`}>
+
+                {step > 1 && (
+                  <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </Button>
+                )}
+                {step < 3 ? (
+                  <Button onClick={nextStep} className="flex items-center gap-2">
+                    Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2">
+                    {loading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4" /> Submitting...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
+                  </Button>
+                )}
+              </div>
+              {statusMsg && (
+                <p className={`mt-4 text-sm ${statusMsg.startsWith("\u274c") ? "text-red-500" : "text-green-500"}`}>
+                  {statusMsg}
+                </p>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
