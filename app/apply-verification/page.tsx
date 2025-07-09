@@ -122,9 +122,9 @@ export default function ApplyVerificationPage() {
       });
       const data = await res.json();
       if (res.ok) router.push("/application-status");
-      else setStatusMsg(`\u274c ${data.message || "Submission failed"}`);
+      else setStatusMsg(`❌ ${data.message || "Submission failed"}`);
     } catch {
-      setStatusMsg("\u274c Network error. Please try again.");
+      setStatusMsg("❌ Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -134,7 +134,9 @@ export default function ApplyVerificationPage() {
     const file = uploadedFiles[name];
     return (
       <div className="space-y-2">
-        <Label className="text-gray-700 dark:text-gray-300 font-medium">{label} {required && <span className="text-red-500">*</span>}</Label>
+        <Label className="text-gray-700 dark:text-gray-300 font-medium">
+          {label} {required && <span className="text-red-500">*</span>}
+        </Label>
         <label className={`flex flex-col items-center justify-center w-full min-h-32 border-2 ${file ? 'border-indigo-300 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-dashed border-gray-300 dark:border-zinc-600'} rounded-xl bg-white/50 dark:bg-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-all duration-200 group`}>
           <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
             {file ? (
@@ -163,137 +165,153 @@ export default function ApplyVerificationPage() {
     );
   };
 
-  const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
-
-// Replace your existing `renderStep()` with this
-const renderStep = () => {
-  const leftPanel = (
-    <div className="bg-indigo-50 dark:bg-zinc-800 flex flex-col items-center justify-start p-6 relative space-y-4">
-      <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" alt="PharmaChain Logo" className="w-32 h-32 object-contain mt-4" />
-      <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/823dd0f268f3b6a3cdbe389d8a47602d9f6a5bb4/verificationpage.png" alt="Verification" className="w-11/10 max-h-96 object-contain -mt-6 scale-110" />
-      <h2 className="text-xl text-center font-semibold text-indigo-700 dark:text-indigo-300 mt-4">Begin Your Verification</h2>
-      <p className="text-sm text-center text-gray-600 dark:text-gray-400 max-w-xs">Fill out your personal details to get started.</p>
-    </div>
-  );
-
-  const rightPanel = (content, title) => (
-    <div className="p-6 sm:p-10 space-y-8 bg-gradient-to-br from-white via-indigo-50 to-purple-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
-      <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h3>
-      {content}
-    </div>
-  );
-
-  const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
-
-  const containerStyle = "grid grid-cols-1 md:grid-cols-2 min-h-[70vh] rounded-2xl overflow-hidden shadow-xl";
-
-  if (step === 1) {
-    return (
-      <div className={containerStyle}>
-        {leftPanel}
-        {rightPanel(
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input name="name" value={formData.name} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input name="email" value={formData.email} readOnly className="px-4 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 cursor-not-allowed text-gray-600 dark:text-gray-400" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-              <div className="space-y-2">
-                <Label>Designation</Label>
-                <Input name="designation" value={formData.designation} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-            </div>
-          </div>,
-          " Personal Information"
-        )}
+  const renderStep = () => {
+    const leftPanel = (
+      <div className="bg-indigo-50 dark:bg-zinc-800 flex flex-col items-center justify-start p-6 relative space-y-4">
+        <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" alt="PharmaChain Logo" className="w-52 h-52 object-contain mt-4" />
+        <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/823dd0f268f3b6a3cdbe389d8a47602d9f6a5bb4/verificationpage.png" alt="Verification" className="w-11/10 max-h-96 object-contain -mt-6 scale-110" />
+        <h2 className="text-xl text-center font-semibold text-indigo-700 dark:text-indigo-300 mt-4">Begin Your Verification</h2>
+        <p className="text-sm text-center text-gray-600 dark:text-gray-400 max-w-xs">Fill out your personal details to get started.</p>
       </div>
     );
-  }
 
-  if (step === 2) {
-    return (
-      <div className={containerStyle}>
-        {leftPanel}
-        {rightPanel(
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Organization</Label>
-                <Input name="organization" value={formData.organization} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-              <div className="space-y-2">
-                <Label>License Number</Label>
-                <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>License Type</Label>
-                <Input name="licenseType" value={formData.licenseType} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-              <div className="space-y-2">
-                <Label>Issued By</Label>
-                <Input name="licenseIssuedBy" value={formData.licenseIssuedBy} onChange={handleChange} required className={commonInputStyle} />
-              </div>
-            </div>
-          </div>,
-          " License Information"
-        )}
+    const rightPanel = (content, title) => (
+      <div className="p-6 sm:p-10 space-y-8 bg-gradient-to-br from-white via-indigo-50 to-purple-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h3>
+
+        
+
+        {content}
       </div>
     );
-  }
 
-  if (step === 3) {
-    return (
-      <div className={containerStyle}>
-        {leftPanel}
-        {rightPanel(
-          <div className="space-y-6">
-            {renderFileUpload("idProofFile", "ID Proof")}
-            {renderFileUpload("licenseCertificateFile", "License Certificate")}
-            {renderFileUpload("addressProofFile", "Address Proof (Optional)", false)}
-          </div>,
-          " Document Upload"
-        )}
-      </div>
-    );
-  }
-};
+    const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
 
+    const containerStyle = "flex flex-col md:flex-row min-h-[70vh] rounded-2xl overflow-hidden shadow-xl";
+
+
+    if (step === 1) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input name="name" value={formData.name} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input name="email" value={formData.email} readOnly className="px-4 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 cursor-not-allowed text-gray-600 dark:text-gray-400" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Designation</Label>
+                  <Input name="designation" value={formData.designation} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+            </div>,
+            "Personal Information"
+          )}
+        </div>
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Organization</Label>
+                  <Input name="organization" value={formData.organization} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>License Number</Label>
+                  <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>License Type</Label>
+                  <Input name="licenseType" value={formData.licenseType} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Issued By</Label>
+                  <Input name="licenseIssuedBy" value={formData.licenseIssuedBy} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+            </div>,
+            "License Information"
+          )}
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              {renderFileUpload("idProofFile", "ID Proof")}
+              {renderFileUpload("licenseCertificateFile", "License Certificate")}
+              {renderFileUpload("addressProofFile", "Address Proof (Optional)", false)}
+            </div>,
+            "Document Upload"
+          )}
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-white dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 p-4">
-
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <img
-            src="https://www.transparenttextures.com/patterns/cubes.png"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <img
+          src="https://www.transparenttextures.com/patterns/cubes.png"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
       <Card className="relative w-full max-w-3xl shadow-lg z-10">
-        <CardContent>
-          <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-white mb-4"></CardTitle>
-          {checking ? (
+  {/* ✅ Progress bar moved here */}
+  <div className="w-full bg-gray-200 h-2.5 dark:bg-zinc-700 rounded-t-xl overflow-hidden">
+    <div
+      className="bg-indigo-600 h-2.5 transition-all duration-300"
+      style={{ width: `${(step / 3) * 100}%` }}
+    ></div>
+  </div>
+
+  <CardContent>
+    <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-white mb-4" />
+    {checking ? (
+
             <div className="flex items-center justify-center h-64">
               <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
             </div>
           ) : (
             <>
               {renderStep()}
-              
-                <div className={`flex mt-6 ${step === 1 ? "justify-end" : "justify-between"}`}>
-
+              <div className="flex flex-col md:flex-row justify-between items-center mt-6">
+  <div className="w-full md:w-auto mt-4 md:mt-0">
+    <Button
+      variant="ghost"
+      onClick={() => signOut()}
+      className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+    >
+      <LogOut className="w-4 h-4" />
+      Sign Out
+    </Button>
+  </div>
                 {step > 1 && (
                   <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
                     <ChevronLeft className="h-4 w-4" /> Back
@@ -316,7 +334,7 @@ const renderStep = () => {
                 )}
               </div>
               {statusMsg && (
-                <p className={`mt-4 text-sm ${statusMsg.startsWith("\u274c") ? "text-red-500" : "text-green-500"}`}>
+                <p className={`mt-4 text-sm ${statusMsg.startsWith("❌") ? "text-red-500" : "text-green-500"}`}>
                   {statusMsg}
                 </p>
               )}
