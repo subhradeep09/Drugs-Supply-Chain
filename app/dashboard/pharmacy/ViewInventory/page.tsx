@@ -1,56 +1,79 @@
 'use client';
-import React, { useState } from 'react';
 
-const mockInventory = [
-  { drug: 'Paracetamol 500mg', batch: 'PBATCH123', stock: 120, expiry: '2024-12-31' },
-  { drug: 'Amoxicillin 250mg', batch: 'PBATCH124', stock: 80, expiry: '2024-11-30' },
-];
+import { useEffect, useState } from 'react';
 
-export default function ViewInventoryPage() {
-  const [search, setSearch] = useState('');
-  const filtered = mockInventory.filter(
-    (d) =>
-      d.drug.toLowerCase().includes(search.toLowerCase()) ||
-      d.batch.toLowerCase().includes(search.toLowerCase())
-  );
+interface InventoryItem {
+  inventoryId: string;       // from pharmacyInventory _id
+  medicineId: string;        // actual medicine ObjectId
+  medicineName: string;
+  totalStock: number;
+  lastOrderedDate: string;
+}
+
+export default function PharmacyInventoryPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/pharmacy-inventory')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInventory(data);
+        } else {
+          console.error('Invalid inventory format', data);
+        }
+      })
+      .catch(err => {
+        console.error('Inventory fetch failed:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">View Inventory</h1>
-      <div className="mb-4 flex gap-2">
-        <input
-          className="input w-full max-w-xs"
-          placeholder="Search by drug or batch..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+    <div className="p-6 min-h-screen bg-blue-50">
+      <div className="max-w-5xl mx-auto bg-white p-6 shadow-md rounded-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center">🏥 Pharmacy Medicine Inventory</h1>
+
+        {loading ? (
+          <p className="text-center text-gray-600">Loading...</p>
+        ) : inventory.length === 0 ? (
+          <p className="text-center text-gray-500">No inventory data available.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <thead>
+                <tr className="bg-gray-100 text-left text-sm font-semibold">
+                  <th className="py-2 px-4">Medicine Name</th>
+                  <th className="py-2 px-4">Total Stock</th>
+                  <th className="py-2 px-4">Last Ordered</th>
+                  <th className="py-2 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventory.map(item => (
+                  <tr key={item.inventoryId} className="border-t text-sm">
+                    <td className="py-2 px-4 font-medium text-gray-800">{item.medicineName}</td>
+                    <td className="py-2 px-4">{item.totalStock}</td>
+                    <td className="py-2 px-4">
+                      {new Date(item.lastOrderedDate).toLocaleDateString('en-IN')}
+                    </td>
+                    <td className="py-2 px-4">
+                      {item.totalStock < 10 ? (
+                        <span className="text-red-600 font-semibold">Low Stock</span>
+                      ) : (
+                        <span className="text-green-600 font-semibold">OK</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Drug</th>
-              <th className="p-3 text-left">Batch</th>
-              <th className="p-3 text-left">Stock</th>
-              <th className="p-3 text-left">Expiry</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={4} className="text-center p-6">No inventory found.</td></tr>
-            ) : filtered.map((d, i) => (
-              <tr key={i} className="border-b hover:bg-gray-50">
-                <td className="p-3">{d.drug}</td>
-                <td className="p-3">{d.batch}</td>
-                <td className="p-3">{d.stock}</td>
-                <td className="p-3">{new Date(d.expiry).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-      `}</style>
     </div>
   );
 }

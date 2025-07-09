@@ -21,7 +21,7 @@ interface Order {
   orderDate: string;
   manufacturerStatus: string;
   dispatchedBatches: DispatchedBatch[];
-  type: 'Hospital' | 'Pharmacy'; // Tag for filter
+  type: 'Hospital' | 'Pharmacy';
 }
 
 export default function ReceivedOrdersPage() {
@@ -51,9 +51,9 @@ export default function ReceivedOrdersPage() {
         }));
 
         const combined = [...taggedHospitalOrders, ...taggedPharmacyOrders].sort(
-  (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
-);
- // newest first
+          (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+        );
+
         setOrders(combined);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -65,9 +65,12 @@ export default function ReceivedOrdersPage() {
     fetchOrders();
   }, []);
 
-  const handleAccept = async (mongoId: string) => {
+  const handleAccept = async (mongoId: string, type: 'Hospital' | 'Pharmacy') => {
+    const endpoint =
+      type === 'Hospital' ? '/api/vendor-accept-orderh' : '/api/vendor-accept-orderp';
+
     try {
-      const res = await fetch('/api/vendor-accept-order', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: mongoId }),
@@ -82,12 +85,16 @@ export default function ReceivedOrdersPage() {
       }
     } catch (error) {
       console.error('Accept error:', error);
+      alert('Error accepting order.');
     }
   };
 
-  const handleReject = async (_id: string) => {
+  const handleReject = async (_id: string, type: 'Hospital' | 'Pharmacy') => {
+    const endpoint =
+      type === 'Hospital' ? '/api/vendor-reject-orderh' : '/api/vendor-reject-orderp';
+
     try {
-      const res = await fetch('/api/vendor-reject-order', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ _id }),
@@ -181,13 +188,13 @@ export default function ReceivedOrdersPage() {
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleAccept(order._id)}
+                        onClick={() => handleAccept(order._id, order.type)}
                         className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-lg hover:bg-green-200 border border-green-300"
                       >
                         Accept
                       </button>
                       <button
-                        onClick={() => handleReject(order._id)}
+                        onClick={() => handleReject(order._id, order.type)}
                         className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-lg hover:bg-red-200 border border-red-300"
                       >
                         Reject
