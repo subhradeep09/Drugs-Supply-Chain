@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import dbConnect from '@/lib/db/mongodborder';
 import Pod from '@/lib/models/pod';
-import Order from '@/lib/models/orderh';
+import PharmacyOrder from '@/lib/models/orderp';
 
 
 import VendorInventory from '@/lib/models/Vendor-Inventory';
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ Find the order
-    const order = await Order.findOne({ orderId });
+    const order = await PharmacyOrder.findOne({ orderId });
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }

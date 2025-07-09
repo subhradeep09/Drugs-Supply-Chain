@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
-import Order from '@/lib/models/orderh';
+import PharmacyOrder from '@/lib/models/orderp';
 
  // replace with your actual path
 
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    const orders = await Order.find({
+    const orders = await PharmacyOrder.find({
       hospitalName,
       manufacturerStatus: 'Delivered',
     });
