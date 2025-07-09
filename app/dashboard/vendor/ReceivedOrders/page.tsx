@@ -21,23 +21,48 @@ interface Order {
   orderDate: string;
   manufacturerStatus: string;
   dispatchedBatches: DispatchedBatch[];
+  type: 'Hospital' | 'Pharmacy'; // Tag for filter
 }
 
 export default function ReceivedOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredType, setFilteredType] = useState<'All' | 'Hospital' | 'Pharmacy'>('All');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/vendor-received-orders')
-      .then((res) => res.json())
-      .then((data) => {
-        setOrders(data.reverse()); // Show newest orders first
+    async function fetchOrders() {
+      try {
+        const [hospitalRes, pharmacyRes] = await Promise.all([
+          fetch('/api/vendor-received-orderh'),
+          fetch('/api/vendor-received-orderp'),
+        ]);
+
+        const hospitalOrders: Order[] = await hospitalRes.json();
+        const pharmacyOrders: Order[] = await pharmacyRes.json();
+
+        const taggedHospitalOrders = hospitalOrders.map((order) => ({
+          ...order,
+          type: 'Hospital',
+        }));
+
+        const taggedPharmacyOrders = pharmacyOrders.map((order) => ({
+          ...order,
+          type: 'Pharmacy',
+        }));
+
+        const combined = [...taggedHospitalOrders, ...taggedPharmacyOrders].sort(
+  (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+);
+ // newest first
+        setOrders(combined);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+      } finally {
         setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error loading orders:', err);
-        setIsLoading(false);
-      });
+      }
+    }
+
+    fetchOrders();
   }, []);
 
   const handleAccept = async (mongoId: string) => {
@@ -81,19 +106,37 @@ export default function ReceivedOrdersPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const filteredOrders =
+    filteredType === 'All'
+      ? orders
+      : orders.filter((order) => order.type === filteredType);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold mb-6 text-blue-700"> Received Orders</h1>
+      <h1 className="text-3xl font-bold mb-6 text-blue-700">Received Orders</h1>
 
-      {orders.length === 0 ? (
+      {/* Filter Tabs */}
+      <div className="flex gap-4 mb-4">
+        {['All', 'Hospital', 'Pharmacy'].map((type) => (
+          <button
+            key={type}
+            onClick={() => setFilteredType(type as 'All' | 'Hospital' | 'Pharmacy')}
+            className={`px-4 py-2 rounded-full text-sm font-medium border ${
+              filteredType === type
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <p className="text-gray-600">No pending orders.</p>
       ) : (
         <div className="overflow-x-auto bg-white shadow-md rounded-xl border border-gray-200">
@@ -102,7 +145,8 @@ export default function ReceivedOrdersPage() {
               <tr>
                 <th className="px-4 py-3">Order ID</th>
                 <th className="px-4 py-3">Medicine</th>
-                <th className="px-4 py-3">Hospital</th>
+                <th className="px-4 py-3">From</th>
+                <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Qty</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Delivery</th>
@@ -111,7 +155,7 @@ export default function ReceivedOrdersPage() {
               </tr>
             </thead>
             <tbody className="text-gray-800">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr
                   key={order._id}
                   className="border-t even:bg-gray-50 hover:bg-gray-100"
@@ -119,6 +163,7 @@ export default function ReceivedOrdersPage() {
                   <td className="px-4 py-3 font-medium">{order.orderId}</td>
                   <td className="px-4 py-3">{order.medicineName}</td>
                   <td className="px-4 py-3">{order.hospitalName}</td>
+                  <td className="px-4 py-3">{order.type}</td>
                   <td className="px-4 py-3">{order.quantity}</td>
                   <td className="px-4 py-3">₹{order.totalValue}</td>
                   <td className="px-4 py-3">{order.deliveryDate?.slice(0, 10)}</td>
