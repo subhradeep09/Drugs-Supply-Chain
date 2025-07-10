@@ -44,7 +44,11 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
-
+       try {
+  await fetch('/api/verification/update-activity', { method: 'POST' });
+} catch (err) {
+  console.warn('Failed to update user activity timestamp:', err);
+}
       try {
         const res = await fetch("/api/verification/status");
         const data = await res.json();
