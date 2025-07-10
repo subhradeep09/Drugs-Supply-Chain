@@ -1,250 +1,291 @@
-'use client';
-import React, { useEffect, useState } from 'react';
+'use client'
+
+import { useEffect, useState } from 'react'
 import {
-  PencilIcon,
-  TrashIcon,
-  PlusIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-} from '@heroicons/react/24/outline';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/app/ui/table'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from '@/app/ui/card'
+import { Input } from '@/app/ui/input'
+import { Button } from '@/app/ui/button'
+import { Search, Download, ChevronLeft, ChevronRight, AlertCircle, CalendarClock } from 'lucide-react'
+import { Badge } from '@/app/ui/badge'
 
-const API_URL = '/api/drugs';
-
-interface Drug {
-  _id?: string;
-  brandName: string;
-  genericName: string;
-  category: string;
-  dosageForm: string;
-  strength: string;
-  batchNumber: string;
-  expiryDate: string;
-  stockQuantity: number;
-  mrp: number;
+interface InventoryItem {
+  _id: string
+  batchNumber: string
+  expiryDate: string
+  stockQuantity: number
+  mrp: number
+  offerPrice: number
+  medicineId: {
+    brandName: string
+    genericName: string
+    dosageForm: string
+    packSize: string
+  }
 }
 
-interface InventoryBadgeProps {
-  stockQuantity: number;
-  expiryDate: string;
-}
+export default function VendorInventoryPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [filtered, setFiltered] = useState<InventoryItem[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+  const itemsPerPage = 40
 
-function InventoryBadge({ stockQuantity, expiryDate }: InventoryBadgeProps) {
-  const isLowStock = stockQuantity < 100;
-  const isExpired = new Date(expiryDate) < new Date();
-  if (isExpired)
-    return (
-      <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-        <ExclamationTriangleIcon className="w-4 h-4" /> Expired
-      </span>
-    );
-  if (isLowStock)
-    return (
-      <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-        <ExclamationTriangleIcon className="w-4 h-4" /> Low Stock
-      </span>
-    );
-  return (
-    <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-      <CheckCircleIcon className="w-4 h-4" /> In Stock
-    </span>
-  );
-}
+  useEffect(() => {
+    setIsLoading(true)
+    fetch('/api/admin-inventory')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Filter out expired items
+          const validItems = data.inventory.filter((item: InventoryItem) => {
+            const expiry = new Date(item.expiryDate)
+            return expiry > new Date()
+          })
+          setInventory(validItems)
+          setFiltered(validItems)
+        }
+      })
+      .catch(error => console.error('Error fetching inventory:', error))
+      .finally(() => setIsLoading(false))
+  }, [])
 
-interface DrugFormProps {
-  initial?: Drug | null;
-  onSave: (form: Drug) => Promise<void>;
-  onCancel: () => void;
-}
+  useEffect(() => {
+    const lower = searchTerm.toLowerCase()
+    const results = inventory.filter(item =>
+      item.medicineId?.brandName?.toLowerCase().includes(lower) ||
+      item.medicineId?.genericName?.toLowerCase().includes(lower) ||
+      item.batchNumber.toLowerCase().includes(lower)
+    )
+    setFiltered(results)
+    setPage(1)
+  }, [searchTerm, inventory])
 
-function DrugForm({ initial, onSave, onCancel }: DrugFormProps) {
-  const [form, setForm] = useState<Drug>(
-    initial || {
-      brandName: '',
-      genericName: '',
-      category: '',
-      dosageForm: '',
-      strength: '',
-      batchNumber: '',
-      expiryDate: '',
-      stockQuantity: 0,
-      mrp: 0,
-    }
-  );
-  const [loading, setLoading] = useState(false);
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: name === 'stockQuantity' || name === 'mrp' ? Number(value) : value }));
-  };
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    await onSave(form);
-    setLoading(false);
-  };
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <input name="brandName" value={form.brandName} onChange={handleChange} placeholder="Brand Name" className="input" required />
-        <input name="genericName" value={form.genericName} onChange={handleChange} placeholder="Generic Name" className="input" required />
-        <input name="category" value={form.category} onChange={handleChange} placeholder="Category" className="input" required />
-        <input name="dosageForm" value={form.dosageForm} onChange={handleChange} placeholder="Dosage Form" className="input" required />
-        <input name="strength" value={form.strength} onChange={handleChange} placeholder="Strength" className="input" required />
-        <input name="batchNumber" value={form.batchNumber} onChange={handleChange} placeholder="Batch Number" className="input" required />
-        <input name="expiryDate" value={form.expiryDate} onChange={handleChange} type="date" className="input" required />
-        <input name="stockQuantity" value={form.stockQuantity} onChange={handleChange} type="number" min={0} placeholder="Stock Quantity" className="input" required />
-        <input name="mrp" value={form.mrp} onChange={handleChange} type="number" min={0} step="0.01" placeholder="MRP" className="input" required />
-      </div>
-      <div className="flex gap-2 justify-end">
-        <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
-        <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-      </div>
-    </form>
-  );
-}
+  const paginated = filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
 
-export default function DrugManagementPage() {
-  const [drugs, setDrugs] = useState<Drug[]>([]);
-  const [search, setSearch] = useState<string>('');
-  const [page, setPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [showForm, setShowForm] = useState<boolean>(false);
-  const [editDrug, setEditDrug] = useState<Drug | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const handleExportCSV = () => {
+    const rows = [
+      ['Brand Name', 'Generic Name', 'Dosage Form', 'Pack Size', 'Batch No.', 'Expiry', 'Stock', 'MRP', 'Offer Price'],
+      ...filtered.map(item => [
+        item.medicineId.brandName,
+        item.medicineId.genericName,
+        item.medicineId.dosageForm,
+        item.medicineId.packSize,
+        item.batchNumber,
+        new Date(item.expiryDate).toLocaleDateString(),
+        item.stockQuantity,
+        item.mrp,
+        item.offerPrice
+      ])
+    ]
+    const csvContent = rows.map(e => e.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.setAttribute('download', `vendor_inventory_${new Date().toISOString().split('T')[0]}.csv`)
+    link.click()
+  }
 
-  const fetchDrugs = async () => {
-    setLoading(true);
-    const res = await fetch(`${API_URL}?search=${encodeURIComponent(search)}&page=${page}&limit=10`);
-    const data = await res.json();
-    setDrugs(data.drugs);
-    setTotalPages(data.pagination.totalPages);
-    setLoading(false);
-  };
+  const isExpiringSoon = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const today = new Date()
+    const in30Days = new Date()
+    in30Days.setDate(today.getDate() + 30)
+    return date <= in30Days && date > today
+  }
 
-  useEffect(() => { fetchDrugs(); }, [search, page]);
+  const isLowStock = (quantity: number) => quantity < 10
+  const isCriticalStock = (quantity: number) => quantity < 5
 
-  const handleSave = async (form: Drug) => {
-    if (editDrug && editDrug._id) {
-      await fetch(API_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, id: editDrug._id }),
-      });
-    } else {
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-    }
-    setShowForm(false);
-    setEditDrug(null);
-    fetchDrugs();
-  };
-
-  const handleDelete = async (id: string) => {
-    await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
-    setDeleteId(null);
-    fetchDrugs();
-  };
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount)
+  }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Drug Management</h1>
-        <button className="btn-primary flex items-center gap-2" onClick={() => { setShowForm(true); setEditDrug(null); }}>
-          <PlusIcon className="w-5 h-5" /> Add Drug
-        </button>
-      </div>
-      <div className="mb-4 flex gap-2">
-        <input
-          className="input w-full max-w-xs"
-          placeholder="Search by name or generic..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-        />
-      </div>
-      <div className="overflow-x-auto rounded shadow bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Brand Name</th>
-              <th className="p-3 text-left">Generic Name</th>
-              <th className="p-3 text-left">Category</th>
-              <th className="p-3 text-left">Dosage</th>
-              <th className="p-3 text-left">Batch</th>
-              <th className="p-3 text-left">Expiry</th>
-              <th className="p-3 text-left">Stock</th>
-              <th className="p-3 text-left">MRP</th>
-              <th className="p-3 text-left">Status</th>
-              <th className="p-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={10} className="text-center p-6">Loading...</td></tr>
-            ) : drugs.length === 0 ? (
-              <tr><td colSpan={10} className="text-center p-6">No drugs found.</td></tr>
-            ) : drugs.map(drug => (
-              <tr key={drug._id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{drug.brandName}</td>
-                <td className="p-3">{drug.genericName}</td>
-                <td className="p-3">{drug.category}</td>
-                <td className="p-3">{drug.strength} {drug.dosageForm}</td>
-                <td className="p-3">{drug.batchNumber}</td>
-                <td className="p-3">{drug.expiryDate ? new Date(drug.expiryDate).toLocaleDateString() : '-'}</td>
-                <td className="p-3">{drug.stockQuantity}</td>
-                <td className="p-3">₹{drug.mrp}</td>
-                <td className="p-3"><InventoryBadge stockQuantity={drug.stockQuantity} expiryDate={drug.expiryDate} /></td>
-                <td className="p-3 flex gap-2">
-                  <button className="btn-icon" onClick={() => { setEditDrug(drug); setShowForm(true); }}><PencilIcon className="w-5 h-5" /></button>
-                  <button className="btn-icon text-red-600" onClick={() => setDeleteId(drug._id || '')}><TrashIcon className="w-5 h-5" /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-between items-center mt-4">
-        <span>Page {page} of {totalPages}</span>
-        <div className="flex gap-2">
-          <button className="btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>Prev</button>
-          <button className="btn-secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Drug Inventory</h1>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
         </div>
       </div>
-      {/* Add/Edit Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">{editDrug ? 'Edit Drug' : 'Add Drug'}</h2>
-            <DrugForm
-              initial={editDrug}
-              onSave={handleSave}
-              onCancel={() => { setShowForm(false); setEditDrug(null); }}
-            />
+
+      <Card className="border-none shadow-sm">
+        <CardHeader className="px-6 pt-6 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle className="text-lg">Medicine Stock</CardTitle>
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by brand, generic name or batch..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-        </div>
-      )}
-      {/* Delete Confirmation */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-            <h2 className="text-lg font-bold mb-4 text-red-600">Delete Drug</h2>
-            <p>Are you sure you want to delete this drug?</p>
-            <div className="flex gap-2 justify-end mt-6">
-              <button className="btn-secondary" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn-danger" onClick={() => handleDelete(deleteId)}>Delete</button>
+        </CardHeader>
+        
+        <CardContent className="p-0">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader className="bg-gray-50">
+                <TableRow>
+                  <TableHead className="w-[180px]">Brand Name</TableHead>
+                  <TableHead>Generic Name</TableHead>
+                  <TableHead>Dosage</TableHead>
+                  <TableHead>Pack</TableHead>
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Expiry</TableHead>
+                  <TableHead className="text-right">Stock</TableHead>
+                  <TableHead className="text-right">MRP</TableHead>
+                  <TableHead className="text-right">Offer Price</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginated.length > 0 ? (
+                  paginated.map(item => (
+                    <TableRow key={item._id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">
+                        {item.medicineId?.brandName}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.medicineId?.genericName}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {item.medicineId?.dosageForm}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.medicineId?.packSize}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {item.batchNumber}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {isExpiringSoon(item.expiryDate) && (
+                            <span className="flex items-center" title="Expiring soon">
+                              <CalendarClock className="h-4 w-4 text-yellow-500" />
+                            </span>
+                          )}
+                          <span className={isExpiringSoon(item.expiryDate) ? 'text-yellow-600' : ''}>
+                            {new Date(item.expiryDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge 
+                          variant={isCriticalStock(item.stockQuantity) ? 'destructive' : 
+                                  isLowStock(item.stockQuantity) ? 'warning' : 'outline'}
+                        >
+                          {item.stockQuantity}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.mrp)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-green-600">
+                        {formatCurrency(item.offerPrice)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-24 text-center">
+                      {searchTerm ? 'No results found' : 'No inventory available'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            Showing <span className="font-medium">{(page - 1) * itemsPerPage + 1}</span> to{' '}
+            <span className="font-medium">
+              {Math.min(page * itemsPerPage, filtered.length)}
+            </span>{' '}
+            of <span className="font-medium">{filtered.length}</span> items
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1 || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center justify-center w-10 text-sm font-medium">
+              {page}/{totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages || isLoading}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+
+      {filtered.length > 0 && (
+        <div className="flex items-center space-x-4 rounded-lg border p-4 bg-blue-50">
+          <AlertCircle className="h-5 w-5 text-blue-600" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-blue-600">Inventory Summary</p>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center">
+                <span className="w-24 text-muted-foreground">Total Items:</span>
+                <span className="font-medium">{filtered.length}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-24 text-muted-foreground">Low Stock:</span>
+                <span className="font-medium">
+                  {filtered.filter(item => isLowStock(item.stockQuantity)).length}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-24 text-muted-foreground">Expiring Soon:</span>
+                <span className="font-medium">
+                  {filtered.filter(item => isExpiringSoon(item.expiryDate)).length}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       )}
-      <style jsx>{`
-        .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400; }
-        .btn-primary { @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition; }
-        .btn-secondary { @apply bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition; }
-        .btn-danger { @apply bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition; }
-        .btn-icon { @apply p-2 rounded hover:bg-gray-100 transition; }
-      `}</style>
     </div>
-  );
-} 
+  )
+}
