@@ -7,7 +7,23 @@ import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 import Medicine from '@/lib/models/medicine';
+import { User } from '@/lib/models/User';
 import { v4 as uuidv4 } from 'uuid';
+
+export async function GET() {
+  await dbConnect();
+
+  try {
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+    return NextResponse.json(orders, { status: 200 });
+  } catch (error) {
+    console.error('[DEBUG_ORDER_FETCH_ERROR]', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+
+
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -19,16 +35,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { medicineId, vendorId, hospitalName, deliveryDate, quantity } = await req.json();
+    const { medicineId, vendorId, deliveryDate, quantity } = await req.json();
     const today = new Date();
 
-    // Get the minimum offer price for that medicine from this vendor
+    // Fetch user details from DB to get organization
+    const hospitalUser = await User.findById(user._id).select('organization');
+    if (!hospitalUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get the best batch (earliest expiry, in stock) for price
     const bestBatch = await VendorInventory.findOne({
       medicineId,
       userId: vendorId,
       expiryDate: { $gte: today },
       stockQuantity: { $gt: 0 },
-    }).sort({ expiryDate: 1 }); // FIFO batch used only for price reference
+    }).sort({ expiryDate: 1 });
 
     if (!bestBatch) {
       return NextResponse.json({ error: 'No valid batch available' }, { status: 400 });
@@ -49,12 +71,12 @@ export async function POST(req: NextRequest) {
       medicineName: medicineDoc.brandName,
       quantity,
       price: avgPrice,
-      hospitalName,
+      hospitalName: hospitalUser.organization, // ✅ Use from DB
       totalValue,
       deliveryDate: new Date(deliveryDate),
       orderDate: new Date(),
       manufacturerStatus: 'Pending',
-      dispatchedBatches: [], // initially empty, will be filled after vendor accepts
+      dispatchedBatches: [],
     });
 
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });

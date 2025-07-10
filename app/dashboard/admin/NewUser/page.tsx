@@ -1,151 +1,247 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { Button } from "@/app/ui/button";
+import Link from "next/link";
 
 interface Verification {
   _id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  designation: string;
   licenseNumber: string;
+  licenseType: string;
+  licenseIssuedBy: string;
   organization: string;
-  applicationStatus: string;
+  idProofUrl?: string;
+  licenseCertificateUrl?: string;
+  addressProofUrl?: string;
+  applicationStatus: "PENDING" | "APPROVED" | "REJECTED";
   submittedAt: string;
-  reviewedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  userId: {
-    _id: string;
-    name: string;
-    email: string;
-  };
 }
 
-export default function NewApplicationsPage() {
-  const [applications, setApplications] = useState<Verification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
+interface UserRequest {
+  _id: string;
+  name: string;
+  email: string;
+  organization: string;
+  role: string;
+  isEmailVerified: boolean;
+  isVerified: boolean;
+  verification?: Verification;
+}
 
-  const fetchPendingApplications = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/verification/pending?page=${page}&limit=5&search=${search}`);
-      const data = await res.json();
-      if (data.success) {
-        setApplications(data.data);
-        setTotal(data.total);
-      }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function UserVerificationRequests() {
+  const [requests, setRequests] = useState<UserRequest[]>([]);
+  const [verifiedDocs, setVerifiedDocs] = useState<{ [key: string]: { idProof?: boolean; license?: boolean; address?: boolean } }>({});
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPendingApplications();
-  }, [page, search]);
+    fetch("/api/verification/all")
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter((u: UserRequest) => u.verification?.applicationStatus === "PENDING");
+        setRequests(filtered);
 
-  const handleAction = async (verificationId: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      const res = await fetch('/api/verification/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verificationId, status }),
-      });
+        const storedState = localStorage.getItem("verifiedDocs");
+        const parsedStored = storedState ? JSON.parse(storedState) : {};
 
-      const data = await res.json();
-      if (data.success) {
-        alert(`Application ${status.toLowerCase()}!`);
-        fetchPendingApplications();
-      } else {
-        alert('Operation failed');
-      }
-    } catch (error) {
-      console.error('Error updating application:', error);
+        const initial: any = {};
+        filtered.forEach((u: UserRequest) => {
+          if (u.verification) {
+            initial[u.verification._id] = {
+              idProof: parsedStored[u.verification._id]?.idProof || false,
+              license: parsedStored[u.verification._id]?.license || false,
+              address: parsedStored[u.verification._id]?.address || false,
+            };
+          }
+        });
+        setVerifiedDocs(initial);
+      })
+      .catch((err) => console.error("Fetch failed:", err));
+  }, []);
+
+  const updateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
+    const res = await fetch("/api/verification/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ verificationId: id, status }),
+    });
+
+    if (res.ok) {
+      setRequests((prev) => prev.filter((u) => u.verification?._id !== id));
     }
   };
 
-  const totalPages = Math.ceil(total / 5);
+  const handleCheckboxChange = (vid: string, field: "idProof" | "license" | "address", checked: boolean) => {
+    setVerifiedDocs((prev) => {
+      const updated = {
+        ...prev,
+        [vid]: {
+          ...prev[vid],
+          [field]: prev[vid][field] || checked,
+        },
+      };
+      localStorage.setItem("verifiedDocs", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   return (
-    <div className="p-10">
-      <h1 className="text-3xl mb-5 font-bold">Pending Applications</h1>
+    <div className="p-6 md:p-10 bg-gradient-to-tr from-gray-50 to-white min-h-screen">
+      <h1 className="text-4xl font-bold mb-10 text-gray-800">User Verification Requests</h1>
 
-      <div className="mb-5">
-        <input
-          type="text"
-          placeholder="Search by License No. or Organization"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="border p-2 w-1/2 rounded shadow"
-        />
-      </div>
-
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : applications.length === 0 ? (
-        <div className="text-center">No pending applications</div>
-      ) : (
-        <>
-          <table className="w-full border border-gray-300 rounded overflow-hidden shadow">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border p-3">Name</th>
-                <th className="border p-3">Email</th>
-                <th className="border p-3">License No</th>
-                <th className="border p-3">Organization</th>
-                <th className="border p-3">Submitted At</th>
-                <th className="border p-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map(app => (
-                <tr key={app._id}>
-                  <td className="border p-3">{app.userId?.name || '-'}</td>
-                  <td className="border p-3">{app.userId?.email || '-'}</td>
-                  <td className="border p-3">{app.licenseNumber}</td>
-                  <td className="border p-3">{app.organization}</td>
-                  <td className="border p-3">{new Date(app.submittedAt).toLocaleString()}</td>
-                  <td className="border p-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleAction(app._id, 'APPROVED')}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+      <div className="overflow-x-auto rounded-xl shadow-lg">
+        <table className="min-w-full text-sm border-collapse rounded-lg overflow-hidden">
+          <thead className="bg-blue-100 text-blue-900">
+            <tr>
+              <th className="p-3 text-left font-semibold">Name</th>
+              <th className="p-3 text-left font-semibold">Email</th>
+              <th className="p-3 text-left font-semibold">Organization</th>
+              <th className="p-3 text-left font-semibold">Status</th>
+              <th className="p-3 text-left font-semibold">Documents</th>
+              <th className="p-3 text-left font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y">
+            {requests.map((user) => (
+              <tr key={user._id} className="hover:bg-gray-50">
+                <td className="p-3 font-medium text-gray-800">{user.name}</td>
+                <td className="p-3 text-gray-600">{user.email}</td>
+                <td className="p-3 text-gray-600">{user.organization}</td>
+                <td className="p-3">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold shadow-sm whitespace-nowrap ${
+                      user.verification?.applicationStatus === "APPROVED"
+                        ? "bg-green-100 text-green-700"
+                        : user.verification?.applicationStatus === "REJECTED"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {user.verification?.applicationStatus || "-"}
+                  </span>
+                </td>
+                <td className="p-3">
+                  {user.verification && (
+                    <Button
+                      className="text-white-700 underline hover:text-blue-900 text-xs px-3 py-1"
+                      onClick={() => setActiveModal(user.verification!._id)}
+                    >
+                      View
+                    </Button>
+                  )}
+                </td>
+                <td className="p-3">
+                  {user.verification?.applicationStatus === "PENDING" && (
+                    <div className="flex flex-col md:flex-row gap-2">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-xs"
+                        onClick={() => updateStatus(user.verification!._id, "APPROVED")}
+                        disabled={
+                          !verifiedDocs[user.verification._id]?.idProof ||
+                          !verifiedDocs[user.verification._id]?.license ||
+                          !verifiedDocs[user.verification._id]?.address
+                        }
                       >
                         Approve
-                      </button>
-                      <button
-                        onClick={() => handleAction(app._id, 'REJECTED')}
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      </Button>
+                      <Button
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs"
+                        onClick={() => updateStatus(user.verification!._id, "REJECTED")}
                       >
                         Reject
-                      </button>
+                      </Button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          <div className="flex justify-between mt-5">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(prev => prev - 1)}
-              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span>Page {page} of {totalPages}</span>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage(prev => prev + 1)}
-              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </>
-      )}
+      {requests.map((user) => {
+        const v = user.verification;
+        return (
+          v && activeModal === v._id && (
+            <div key={v._id} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 rounded-xl relative">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-black text-xl"
+                >
+                  &times;
+                </button>
+                <h2 className="text-2xl font-semibold mb-4">Document Verification - {user.name}</h2>
+
+                <div className="mb-4">
+                  <p><strong>Full Name:</strong> {v.fullName}</p>
+                  <p><strong>Email:</strong> {v.email}</p>
+                  <p><strong>Phone Number:</strong> {v.phoneNumber}</p>
+                  <p><strong>Designation:</strong> {v.designation}</p>
+                  <p><strong>License Number:</strong> {v.licenseNumber}</p>
+                  <p><strong>License Type:</strong> {v.licenseType}</p>
+                  <p><strong>License Issued By:</strong> {v.licenseIssuedBy}</p>
+                  <p><strong>Organization:</strong> {v.organization}</p>
+                  <p><strong>Submitted At:</strong> {new Date(v.submittedAt).toLocaleString()}</p>
+                </div>
+
+                {v.idProofUrl && (
+                  <div className="mb-4">
+                    <p className="font-semibold text-gray-700 mb-1">ID Proof</p>
+                    <iframe src={v.idProofUrl} className="w-full h-72 border" />
+                    <label className="block mt-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={verifiedDocs[v._id]?.idProof || false}
+                        disabled={verifiedDocs[v._id]?.idProof}
+                        onChange={(e) => handleCheckboxChange(v._id, "idProof", e.target.checked)}
+                      />
+                      Verified
+                    </label>
+                  </div>
+                )}
+                {v.licenseCertificateUrl && (
+                  <div className="mb-4">
+                    <p className="font-semibold text-gray-700 mb-1">License Certificate</p>
+                    <iframe src={v.licenseCertificateUrl} className="w-full h-72 border" />
+                    <label className="block mt-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={verifiedDocs[v._id]?.license || false}
+                        disabled={verifiedDocs[v._id]?.license}
+                        onChange={(e) => handleCheckboxChange(v._id, "license", e.target.checked)}
+                      />
+                      Verified
+                    </label>
+                  </div>
+                )}
+                {v.addressProofUrl && (
+                  <div className="mb-4">
+                    <p className="font-semibold text-gray-700 mb-1">Address Proof</p>
+                    <iframe src={v.addressProofUrl} className="w-full h-72 border" />
+                    <label className="block mt-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={verifiedDocs[v._id]?.address || false}
+                        disabled={verifiedDocs[v._id]?.address}
+                        onChange={(e) => handleCheckboxChange(v._id, "address", e.target.checked)}
+                      />
+                      Verified
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        );
+      })}
     </div>
   );
 }
