@@ -167,7 +167,7 @@ export default function VendorInvoicesPage() {
           <table className="min-w-full text-sm text-left">
             <thead>
               <tr className="bg-gray-100 text-gray-600">
-                {['orderId', 'medicineName', 'hospitalName', 'quantity', 'type'].map((field, idx) => (
+                {['orderId', 'medicineName', 'Name', 'quantity', 'type'].map((field, idx) => (
                   <th
                     key={idx}
                     className="p-3 cursor-pointer select-none"

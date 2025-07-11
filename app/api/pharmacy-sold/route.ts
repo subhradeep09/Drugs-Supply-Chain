@@ -42,14 +42,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Define batch type
+    type Batch = {
+      _id: mongoose.Types.ObjectId;
+      batchNumber: string;
+      expiryDate: string | Date;
+      quantity: number;
+    };
+
     // Filter valid (non-expired) batches
     const today = new Date();
-    const validBatches = inventory.batches
+    const validBatches = (inventory.batches as Batch[])
       .filter(
-        (batch) => new Date(batch.expiryDate) >= today && batch.quantity > 0
+        (batch: Batch) => new Date(batch.expiryDate) >= today && batch.quantity > 0
       )
       .sort(
-        (a, b) =>
+        (a: Batch, b: Batch) =>
           new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
       );
 
@@ -78,8 +86,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Update total stock
-    inventory.totalStock = inventory.batches.reduce(
-      (sum, b) => sum + b.quantity,
+    inventory.totalStock = (inventory.batches as Batch[]).reduce(
+      (sum: number, b: Batch) => sum + b.quantity,
       0
     );
     await inventory.save();
