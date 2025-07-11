@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       medicineId: medicineId,
     });
 
-    if (!inventory || inventory.totalStock<= quantity) {
+    if (!inventory || inventory.totalStock< quantity) {
       return NextResponse.json({ error: `Insufficient stock. Available: ${inventory?.totalStock || 0}` },
         { status: 400 });
     }
