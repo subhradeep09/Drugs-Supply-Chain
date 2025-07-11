@@ -1,7 +1,10 @@
 'use client';
+
 import { useEffect, useMemo, useState } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/app/ui/InvoicePDF';
+
+type OrderType = 'hospital' | 'pharmacy';
 
 interface Order {
   orderId: string;
@@ -9,6 +12,7 @@ interface Order {
   hospitalName: string;
   quantity: number;
   manufacturerStatus: string;
+  type: OrderType;
 }
 
 interface Invoice {
@@ -23,6 +27,7 @@ interface Invoice {
     pricePerUnit: number;
     total: number;
   };
+  type: OrderType;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -32,30 +37,54 @@ export default function VendorInvoicesPage() {
   const [invoiceMap, setInvoiceMap] = useState<{ [orderId: string]: Invoice }>({});
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<'all' | OrderType>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<keyof Order>('orderId');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    fetch('/api/vendor-invoice')
-      .then(res => res.json())
-      .then(data => setOrders(data.reverse()))
-      .catch(() => setError('Failed to load orders.'));
+    const fetchAllOrders = async () => {
+      try {
+        const [hospitalRes, pharmacyRes] = await Promise.all([
+          fetch('/api/vendor-invoice'),
+          fetch('/api/vendor-invoice-pharmacy'),
+        ]);
 
-    const saved = localStorage.getItem('generatedInvoices');
-    if (saved) {
-      setInvoiceMap(JSON.parse(saved));
-    }
+        const hospitalOrders = await hospitalRes.json();
+        const pharmacyOrders = await pharmacyRes.json();
+
+        const taggedHospitalOrders = hospitalOrders.map((o: any) => ({ ...o, type: 'hospital' }));
+        const taggedPharmacyOrders = pharmacyOrders.map((o: any) => ({ ...o, type: 'pharmacy' }));
+
+        const combined = [...taggedHospitalOrders, ...taggedPharmacyOrders].reverse();
+        setOrders(combined);
+      } catch (err) {
+        setError('Failed to load orders.');
+      }
+
+      const saved = localStorage.getItem('generatedInvoices');
+      if (saved) {
+        setInvoiceMap(JSON.parse(saved));
+      }
+    };
+
+    fetchAllOrders();
   }, []);
 
-  const handleGenerateInvoice = async (orderId: string) => {
+  const handleGenerateInvoice = async (orderId: string, type: OrderType) => {
     setError('');
     try {
-      const res = await fetch(`/api/vendor-invoice/${orderId}`);
+      const endpoint =
+        type === 'hospital'
+          ? `/api/vendor-invoice/${orderId}`
+          : `/api/vendor-invoice-pharmacy/${orderId}`;
+
+      const res = await fetch(endpoint);
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error);
 
-      const updatedMap = { ...invoiceMap, [orderId]: data };
+      const updatedMap = { ...invoiceMap, [orderId]: { ...data, type } };
       setInvoiceMap(updatedMap);
       localStorage.setItem('generatedInvoices', JSON.stringify(updatedMap));
     } catch (err: any) {
@@ -65,11 +94,13 @@ export default function VendorInvoicesPage() {
 
   const filteredOrders = useMemo(() => {
     return orders
-      .filter(
-        o =>
+      .filter(o => {
+        const matchesSearch =
           o.medicineName.toLowerCase().includes(search.toLowerCase()) ||
-          o.hospitalName.toLowerCase().includes(search.toLowerCase())
-      )
+          o.hospitalName.toLowerCase().includes(search.toLowerCase());
+        const matchesType = filterType === 'all' || o.type === filterType;
+        return matchesSearch && matchesType;
+      })
       .sort((a, b) => {
         const aVal = a[sortField];
         const bVal = b[sortField];
@@ -82,7 +113,7 @@ export default function VendorInvoicesPage() {
           ? (aVal as number) - (bVal as number)
           : (bVal as number) - (aVal as number);
       });
-  }, [orders, search, sortField, sortOrder]);
+  }, [orders, search, sortField, sortOrder, filterType]);
 
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = filteredOrders.slice(
@@ -102,28 +133,41 @@ export default function VendorInvoicesPage() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="bg-white shadow-xl rounded-xl p-6">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-4"> Orders Invoice</h1>
+        <h1 className="text-4xl font-extrabold text-gray-800 mb-4">Orders Invoice</h1>
 
         {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
-        <div className="flex items-center justify-between mb-4">
+        {/* Search + Filter */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
           <input
             type="text"
             placeholder="Search medicine or hospital..."
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:border-blue-400"
+            className="w-full md:max-w-md px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:border-blue-400"
             value={search}
             onChange={e => {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
           />
+          <select
+            value={filterType}
+            onChange={e => {
+              setFilterType(e.target.value as any);
+              setCurrentPage(1);
+            }}
+            className="px-4 py-2 border border-gray-300 rounded shadow-sm"
+          >
+            <option value="all">All</option>
+            <option value="hospital">Hospital</option>
+            <option value="pharmacy">Pharmacy</option>
+          </select>
         </div>
 
         <div className="overflow-x-auto rounded-md">
           <table className="min-w-full text-sm text-left">
             <thead>
               <tr className="bg-gray-100 text-gray-600">
-                {['orderId', 'medicineName', 'hospitalName', 'quantity'].map((field, idx) => (
+                {['orderId', 'medicineName', 'hospitalName', 'quantity', 'type'].map((field, idx) => (
                   <th
                     key={idx}
                     className="p-3 cursor-pointer select-none"
@@ -143,6 +187,7 @@ export default function VendorInvoicesPage() {
                   <td className="p-3">{o.medicineName}</td>
                   <td className="p-3">{o.hospitalName}</td>
                   <td className="p-3">{o.quantity}</td>
+                  <td className="p-3 capitalize">{o.type}</td>
                   <td className="p-3 text-center">
                     {invoiceMap[o.orderId] ? (
                       <PDFDownloadLink
@@ -154,7 +199,7 @@ export default function VendorInvoicesPage() {
                       </PDFDownloadLink>
                     ) : (
                       <button
-                        onClick={() => handleGenerateInvoice(o.orderId)}
+                        onClick={() => handleGenerateInvoice(o.orderId, o.type)}
                         className="inline-block px-4 py-1 text-white bg-blue-600 hover:bg-blue-700 rounded shadow transition"
                       >
                         Generate Invoice
