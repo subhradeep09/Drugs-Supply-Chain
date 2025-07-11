@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
       medicineId: medicineId,
     });
 
-    if (!inventory) {
-      return NextResponse.json({ error: 'No inventory found' }, { status: 404 });
+    if (!inventory || inventory.totalStock<= quantity) {
+      return NextResponse.json({ error: `Insufficient stock. Available: ${inventory?.totalStock || 0}` },
+        { status: 400 });
     }
 
     // Filter only non-expired batches
