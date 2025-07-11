@@ -54,6 +54,7 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
     { title: 'Inventory', href: '/dashboard/pharmacy/ViewInventory', icon: Package },
     { title: 'Upload POD', href: '/dashboard/pharmacy/InternalTransfers', icon: ArrowLeftRight },
     { title: 'Drug Returns', href: '/dashboard/pharmacy/DrugReturns', icon: RotateCcw },
+    { title: 'Drugs Sold', href: '/dashboard/pharmacy/DrugsSold', icon: RotateCcw },
     { title: 'Consumption Chart', href: '/dashboard/pharmacy/ConsumptionChart', icon: LineChart },
     { title: 'Feedback & Alerts', href: '/dashboard/pharmacy/FeedbackAlerts', icon: AlertCircle },
     { title: 'Settings', href: '/dashboard/pharmacy/Settings', icon: Settings },
