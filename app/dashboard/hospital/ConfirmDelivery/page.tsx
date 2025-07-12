@@ -1,6 +1,10 @@
+// ✅ Full Frontend Component Code with Blockchain Integration (Ethers v6 compatible)
+
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ethers } from 'ethers';
+import DeliveredOrdersABI from '@/contracts/DeliveredOrders.json';
 
 interface Order {
   _id: string;
@@ -11,6 +15,8 @@ interface Order {
   manufacturerStatus: string;
   totalValue: number;
 }
+
+const CONTRACT_ADDRESS = "0x5A86858aA3b595FD6663c2296741eF4cd8BC4d01"; // Replace with actual deployed address
 
 export default function TrackOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -42,15 +48,49 @@ export default function TrackOrdersPage() {
       });
 
       const data = await res.json();
-      if (res.ok) {
-        alert('✅ Order marked as Delivered');
+
+      if (!res.ok) {
+        console.error('❌ hospital-mark-delivered error:', data);
+        alert(data.error || 'Failed to update order');
+        return;
+      }
+
+      alert('✅ Order marked as Delivered');
+
+      const extra = await fetch(`/api/order-details?orderId=${orderId}`);
+      if (!extra.ok) {
+        const errData = await extra.json();
+        throw new Error(errData.error || 'Error fetching order details');
+      }
+
+      const { hospitalName, medicineId, vendorId, vendorName } = await extra.json();
+      const order = orders.find((o) => o.orderId === orderId);
+      if (!order) return;
+
+      if ((window as any).ethereum) {
+        const provider = new ethers.BrowserProvider((window as any).ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, DeliveredOrdersABI, signer);
+
+        const tx = await contract.addDeliveredOrder(
+          order.orderId,
+          hospitalName,
+          medicineId,
+          order.medicineName,
+          order.quantity,
+          vendorId,
+          vendorName
+        );
+
+        await tx.wait();
+        alert("📜 Order saved to blockchain!");
         fetchOrders();
       } else {
-        alert(data.error || 'Failed to update order');
+        alert("Please install MetaMask to record delivery on blockchain.");
       }
-    } catch (err) {
-      console.error('Update failed', err);
-      alert('Failed to update order');
+    } catch (err: any) {
+      console.error('Update failed ❌', err);
+      alert(`❌ Failed to update order: ${err.message || err}`);
     }
   };
 
@@ -93,7 +133,6 @@ export default function TrackOrdersPage() {
     fetchOrders();
   }, []);
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const displayedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
@@ -169,7 +208,6 @@ export default function TrackOrdersPage() {
             </table>
           </div>
 
-          {/* Pagination Controls */}
           <div className="flex justify-between items-center mt-6">
             <p className="text-sm text-gray-600">
               Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredOrders.length)}–
