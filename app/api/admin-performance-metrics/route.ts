@@ -3,108 +3,149 @@ import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import PharmacyOrder from '@/lib/models/orderp';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
-import Medicine from '@/lib/models/medicine'; // ✅ FIX: Ensure schema is registered
+import Medicine from '@/lib/models/medicine';
+import {User} from '@/lib/models/User'; // Ensure this model exists
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
+  try {
+    await dbConnect();
 
-  const filter = req.nextUrl.searchParams.get('filter') || 'monthly';
+    const filter = req.nextUrl.searchParams.get('filter') || 'monthly';
+    const { start, end } = getDateRange(filter);
 
+    // Get orders
+    const [hospitalOrders, pharmacyOrders] = await Promise.all([
+      Order.find({ orderDate: { $gte: start, $lte: end } }).lean(),
+      PharmacyOrder.find({ orderDate: { $gte: start, $lte: end } }).lean(),
+    ]);
+
+    const allOrders = [...hospitalOrders, ...pharmacyOrders];
+
+    // Metrics
+    const totalOrders = allOrders.length;
+    const fulfilledOrders = allOrders.filter(o => o.manufacturerStatus === 'Delivered');
+    const fulfillmentRate = totalOrders > 0 ? Math.round((fulfilledOrders.length / totalOrders) * 100) : 0;
+    const avgDeliveryTime = calculateAvgHours(fulfilledOrders);
+
+    // Low stock & expired drugs
+    const [lowStock, expiredDrugs] = await Promise.all([
+      VendorInventory.countDocuments({ stockQuantity: { $lt: 50 } }),
+      VendorInventory.countDocuments({ expiryDate: { $lt: new Date() } }),
+    ]);
+
+    // Get all medicineIds used in orders
+    const medicineIds = allOrders.map(o => o.medicineId);
+    const medicines = await Medicine.find({ _id: { $in: medicineIds } }).select('_id userId medicineName').lean();
+
+    // Map medicineId to vendorId
+    const medicineToVendor: Record<string, string> = {};
+    medicines.forEach(med => {
+      medicineToVendor[med._id.toString()] = med.userId.toString();
+    });
+
+    // Count vendor orders
+    const vendorOrderCount: Record<string, number> = {};
+    allOrders.forEach(order => {
+      const vendorId = medicineToVendor[order.medicineId.toString()];
+      if (vendorId) {
+        vendorOrderCount[vendorId] = (vendorOrderCount[vendorId] || 0) + 1;
+      }
+    });
+
+    const topVendors = Object.entries(vendorOrderCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    // Fetch vendor names
+    const vendorIds = topVendors.map(([id]) => id);
+    const vendors = await User.find({ _id: { $in: vendorIds } }).select('name _id').lean();
+    const vendorIdToName = Object.fromEntries(vendors.map(v => [v._id.toString(), v.name || 'Unknown Vendor']));
+
+    const vendorOrders = topVendors.map(([vendorId, count]) => ({
+      vendor: vendorIdToName[vendorId] || vendorId,
+      orders: count,
+    }));
+
+    // Top ordered drugs
+    const topDrugs = groupByField(allOrders, 'medicineName', 'count', 'medicine');
+
+    // Top hospitals (from hospitalOrders)
+    const topHospitals = groupByField(hospitalOrders, 'hospitalName', 'orders', 'hospital');
+
+    // Top pharmacies (from pharmacyOrders)
+    const topPharmacies = groupByField(pharmacyOrders, 'hospitalName', 'orders', 'pharmacy');
+
+    return NextResponse.json({
+      metrics: {
+        totalOrders,
+        avgDeliveryTime: avgDeliveryTime.toFixed(1),
+        fulfillmentRate: `${fulfillmentRate}%`,
+        lowStockIncidents: lowStock,
+        expiredDrugs,
+      },
+      charts: {
+        vendorOrders,
+        topDrugs,
+        topHospitals,
+        topPharmacies,
+      },
+    });
+  } catch (err) {
+    console.error('Performance API error:', err);
+    return NextResponse.json({ error: 'Server Error' }, { status: 500 });
+  }
+}
+
+// Helper functions
+
+function getDateRange(filter: string) {
   const now = new Date();
-  let fromDate = new Date();
+  const start = new Date(now);
 
-  if (filter === 'weekly') fromDate.setDate(now.getDate() - 7);
-  else if (filter === 'monthly') fromDate.setMonth(now.getMonth() - 1);
-  else if (filter === 'yearly') fromDate.setFullYear(now.getFullYear() - 1);
+  switch (filter) {
+    case 'weekly':
+      start.setDate(now.getDate() - 7);
+      break;
+    case 'monthly':
+      start.setMonth(now.getMonth() - 1);
+      break;
+    case 'yearly':
+      start.setFullYear(now.getFullYear() - 1);
+      break;
+  }
 
-  const [hospitalOrdersRaw, pharmacyOrdersRaw] = await Promise.all([
-    Order.find({ createdAt: { $gte: fromDate } })
-      .populate({
-        path: 'medicineId',
-        populate: {
-          path: 'userId',
-          select: 'name',
-        },
-      }),
-    PharmacyOrder.find({ createdAt: { $gte: fromDate } })
-      .populate({
-        path: 'medicineId',
-        populate: {
-          path: 'userId',
-          select: 'name',
-        },
-      }),
-  ]);
+  return { start, end: now };
+}
 
-  const allOrders = [...hospitalOrdersRaw, ...pharmacyOrdersRaw];
+function calculateAvgHours(orders: any[]) {
+  if (!orders.length) return 0;
 
-  const deliveredOrders = allOrders.filter(
-    (o) => o.manufacturerStatus === 'Delivered'
-  );
+  const totalHours = orders.reduce((sum, order) => {
+    const created = new Date(order.createdAt).getTime();
+    const updated = new Date(order.updatedAt).getTime();
+    return sum + (updated - created) / (1000 * 60 * 60); // hours
+  }, 0);
 
-  const avgDeliveryTimeHours =
-    deliveredOrders.reduce((sum, o) => {
-      const created = new Date(o.createdAt).getTime();
-      const updated = new Date(o.updatedAt).getTime();
-      return sum + (updated - created);
-    }, 0) /
-    (deliveredOrders.length || 1) /
-    (1000 * 60 * 60);
+  return totalHours / orders.length;
+}
 
-  const fulfillmentRate =
-    ((deliveredOrders.length / (allOrders.length || 1)) * 100).toFixed(2) + '%';
+function groupByField(data: any[], field: string, valueKey: string, labelKeyOverride?: string) {
+  const counts: Record<string, number> = {};
 
-  const totalOrders = allOrders.length;
+  for (const item of data) {
+    const key = item[field];
+    if (key) counts[key] = (counts[key] || 0) + 1;
+  }
 
-  const inventory = await VendorInventory.find()
-    .populate('medicineId', 'brandName')
-    .populate('userId', 'name');
-
-  const lowStockIncidents = inventory.filter(
-    (item) => item.stockQuantity < 10
-  ).length;
-
-  const expiredDrugs = inventory.filter(
-    (item) => new Date(item.expiryDate) < new Date()
-  ).length;
-
-  const vendorOrders: Record<string, number> = {};
-  const medicineOrders: Record<string, number> = {};
-  const hospitalOrders: Record<string, number> = {};
-  const pharmacyOrders: Record<string, number> = {};
-
-  const processOrder = (order: any, type: 'Hospital' | 'Pharmacy') => {
-    const vendorName = order.medicineId?.userId?.name || 'Unknown Vendor';
-    const medicineName = order.medicineId?.brandName || order.medicineName || 'Unknown Drug';
-
-    vendorOrders[vendorName] = (vendorOrders[vendorName] || 0) + 1;
-    medicineOrders[medicineName] = (medicineOrders[medicineName] || 0) + 1;
-
-    if (type === 'Hospital') {
-      const hospitalName = order.hospitalName || 'Unknown Hospital';
-      hospitalOrders[hospitalName] = (hospitalOrders[hospitalName] || 0) + 1;
-    } else {
-      const pharmacyName = order.hospitalName || 'Unknown Pharmacy';
-      pharmacyOrders[pharmacyName] = (pharmacyOrders[pharmacyName] || 0) + 1;
-    }
-  };
-
-  hospitalOrdersRaw.forEach((o) => processOrder(o, 'Hospital'));
-  pharmacyOrdersRaw.forEach((o) => processOrder(o, 'Pharmacy'));
-
-  return NextResponse.json({
-    metrics: {
-      totalOrders,
-      avgDeliveryTime: avgDeliveryTimeHours.toFixed(1),
-      fulfillmentRate,
-      lowStockIncidents,
-      expiredDrugs,
-    },
-    charts: {
-      vendorOrders: Object.entries(vendorOrders).map(([vendor, orders]) => ({ vendor, orders })),
-      topDrugs: Object.entries(medicineOrders).map(([medicine, count]) => ({ medicine, count })),
-      topHospitals: Object.entries(hospitalOrders).map(([hospital, orders]) => ({ hospital, orders })),
-      topPharmacies: Object.entries(pharmacyOrders).map(([pharmacy, orders]) => ({ pharmacy, orders })),
-    },
-  });
+  return Object.entries(counts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([label, count]) => ({
+      [labelKeyOverride || (
+        field === 'medicineName' ? 'medicine' :
+        field === 'hospitalName' ? 'hospital' :
+        'vendor'
+      )]: label,
+      [valueKey]: count,
+    }));
 }

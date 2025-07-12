@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/app/ui/button";
 import Link from "next/link";
+import { Check, X, ChevronRight, FileText, FileBadge, Home, User, Clock, CheckCircle, XCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Verification {
   _id: string;
@@ -37,11 +39,14 @@ export default function UserVerificationRequests() {
   const [requests, setRequests] = useState<UserRequest[]>([]);
   const [verifiedDocs, setVerifiedDocs] = useState<{ [key: string]: { idProof?: boolean; license?: boolean; address?: boolean } }>({});
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/verification/all")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/verification/all");
+        const data = await res.json();
         const filtered = data.filter((u: UserRequest) => u.verification?.applicationStatus === "PENDING");
         setRequests(filtered);
 
@@ -59,19 +64,29 @@ export default function UserVerificationRequests() {
           }
         });
         setVerifiedDocs(initial);
-      })
-      .catch((err) => console.error("Fetch failed:", err));
+      } catch (err) {
+        console.error("Fetch failed:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const updateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
-    const res = await fetch("/api/verification/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verificationId: id, status }),
-    });
+    try {
+      const res = await fetch("/api/verification/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verificationId: id, status }),
+      });
 
-    if (res.ok) {
-      setRequests((prev) => prev.filter((u) => u.verification?._id !== id));
+      if (res.ok) {
+        setRequests((prev) => prev.filter((u) => u.verification?._id !== id));
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
     }
   };
 
@@ -89,159 +104,377 @@ export default function UserVerificationRequests() {
     });
   };
 
-  return (
-    <div className="p-6 md:p-10 bg-gradient-to-tr from-gray-50 to-white min-h-screen">
-      <h1 className="text-4xl font-bold mb-10 text-gray-800">User Verification Requests</h1>
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case "REJECTED":
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+    }
+  };
 
-      <div className="overflow-x-auto rounded-xl shadow-lg">
-        <table className="min-w-full text-sm border-collapse rounded-lg overflow-hidden">
-          <thead className="bg-blue-100 text-blue-900">
-            <tr>
-              <th className="p-3 text-left font-semibold">Name</th>
-              <th className="p-3 text-left font-semibold">Email</th>
-              <th className="p-3 text-left font-semibold">Organization</th>
-              <th className="p-3 text-left font-semibold">Status</th>
-              <th className="p-3 text-left font-semibold">Documents</th>
-              <th className="p-3 text-left font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y">
-            {requests.map((user) => (
-              <tr key={user._id} className="hover:bg-gray-50">
-                <td className="p-3 font-medium text-gray-800">{user.name}</td>
-                <td className="p-3 text-gray-600">{user.email}</td>
-                <td className="p-3 text-gray-600">{user.organization}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold shadow-sm whitespace-nowrap ${
-                      user.verification?.applicationStatus === "APPROVED"
-                        ? "bg-green-100 text-green-700"
-                        : user.verification?.applicationStatus === "REJECTED"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    {user.verification?.applicationStatus || "-"}
-                  </span>
-                </td>
-                <td className="p-3">
-                  {user.verification && (
-                    <Button
-                      className="text-white-700 underline hover:text-blue-900 text-xs px-3 py-1"
-                      onClick={() => setActiveModal(user.verification!._id)}
+  return (
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Verification Requests</h1>
+            <p className="text-gray-600 mt-1">
+              {requests.length} pending {requests.length === 1 ? "request" : "requests"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
+              <span>Export</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+              <Check className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">All caught up!</h3>
+            <p className="text-gray-500">There are no pending verification requests at this time.</p>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+          >
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Organization
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Documents
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {requests.map((user) => (
+                    <motion.tr
+                      key={user._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      whileHover={{ backgroundColor: "rgba(249, 250, 251, 1)" }}
+                      className="transition-colors duration-150"
                     >
-                      View
-                    </Button>
-                  )}
-                </td>
-                <td className="p-3">
-                  {user.verification?.applicationStatus === "PENDING" && (
-                    <div className="flex flex-col md:flex-row gap-2">
-                      <Button
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-xs"
-                        onClick={() => updateStatus(user.verification!._id, "APPROVED")}
-                        disabled={
-                          !verifiedDocs[user.verification._id]?.idProof ||
-                          !verifiedDocs[user.verification._id]?.license ||
-                          !verifiedDocs[user.verification._id]?.address
-                        }
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs"
-                        onClick={() => updateStatus(user.verification!._id, "REJECTED")}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{user.organization}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {user.verification && getStatusIcon(user.verification.applicationStatus)}
+                          <span className="ml-2 text-sm text-gray-500 capitalize">
+                            {user.verification?.applicationStatus.toLowerCase()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.verification && (
+                          <Button
+                            variant="ghost"
+                            className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 flex items-center gap-1"
+                            onClick={() => setActiveModal(user.verification!._id)}
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span>View</span>
+                          </Button>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {user.verification?.applicationStatus === "PENDING" && (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="success"
+                              className="px-4 py-2 text-sm flex items-center gap-1"
+                              onClick={() => updateStatus(user.verification!._id, "APPROVED")}
+                              disabled={
+                                !verifiedDocs[user.verification._id]?.idProof ||
+                                !verifiedDocs[user.verification._id]?.license ||
+                                !verifiedDocs[user.verification._id]?.address
+                              }
+                            >
+                              <Check className="w-4 h-4" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              className="px-4 py-2 text-sm flex items-center gap-1"
+                              onClick={() => updateStatus(user.verification!._id, "REJECTED")}
+                            >
+                              <X className="w-4 h-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
       </div>
 
-      {requests.map((user) => {
-        const v = user.verification;
-        return (
-          v && activeModal === v._id && (
-            <div key={v._id} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 rounded-xl relative">
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="absolute top-4 right-4 text-gray-500 hover:text-black text-xl"
-                >
-                  &times;
-                </button>
-                <h2 className="text-2xl font-semibold mb-4">Document Verification - {user.name}</h2>
+      <AnimatePresence>
+        {activeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setActiveModal(null)}
+          >
+            {requests.map((user) => {
+              const v = user.verification;
+              return (
+                v &&
+                activeModal === v._id && (
+                  <motion.div
+                    key={v._id}
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl relative"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setActiveModal(null)}
+                      className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-6">
+                        <div>
+                          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+                            <User className="text-blue-500" />
+                            {user.name}
+                          </h2>
+                          <p className="text-gray-500 mt-1">{user.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              v.applicationStatus === "APPROVED"
+                                ? "bg-green-100 text-green-800"
+                                : v.applicationStatus === "REJECTED"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {v.applicationStatus}
+                          </span>
+                        </div>
+                      </div>
 
-                <div className="mb-4">
-                  <p><strong>Full Name:</strong> {v.fullName}</p>
-                  <p><strong>Email:</strong> {v.email}</p>
-                  <p><strong>Phone Number:</strong> {v.phoneNumber}</p>
-                  <p><strong>Designation:</strong> {v.designation}</p>
-                  <p><strong>License Number:</strong> {v.licenseNumber}</p>
-                  <p><strong>License Type:</strong> {v.licenseType}</p>
-                  <p><strong>License Issued By:</strong> {v.licenseIssuedBy}</p>
-                  <p><strong>Organization:</strong> {v.organization}</p>
-                  <p><strong>Submitted At:</strong> {new Date(v.submittedAt).toLocaleString()}</p>
-                </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                            <User className="w-5 h-5 text-gray-500" />
+                            Personal Information
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <DetailItem label="Full Name" value={v.fullName} />
+                            <DetailItem label="Phone" value={v.phoneNumber} />
+                            <DetailItem label="Designation" value={v.designation} />
+                          </div>
+                        </div>
 
-                {v.idProofUrl && (
-                  <div className="mb-4">
-                    <p className="font-semibold text-gray-700 mb-1">ID Proof</p>
-                    <iframe src={v.idProofUrl} className="w-full h-72 border" />
-                    <label className="block mt-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={verifiedDocs[v._id]?.idProof || false}
-                        disabled={verifiedDocs[v._id]?.idProof}
-                        onChange={(e) => handleCheckboxChange(v._id, "idProof", e.target.checked)}
-                      />
-                      Verified
-                    </label>
-                  </div>
-                )}
-                {v.licenseCertificateUrl && (
-                  <div className="mb-4">
-                    <p className="font-semibold text-gray-700 mb-1">License Certificate</p>
-                    <iframe src={v.licenseCertificateUrl} className="w-full h-72 border" />
-                    <label className="block mt-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={verifiedDocs[v._id]?.license || false}
-                        disabled={verifiedDocs[v._id]?.license}
-                        onChange={(e) => handleCheckboxChange(v._id, "license", e.target.checked)}
-                      />
-                      Verified
-                    </label>
-                  </div>
-                )}
-                {v.addressProofUrl && (
-                  <div className="mb-4">
-                    <p className="font-semibold text-gray-700 mb-1">Address Proof</p>
-                    <iframe src={v.addressProofUrl} className="w-full h-72 border" />
-                    <label className="block mt-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={verifiedDocs[v._id]?.address || false}
-                        disabled={verifiedDocs[v._id]?.address}
-                        onChange={(e) => handleCheckboxChange(v._id, "address", e.target.checked)}
-                      />
-                      Verified
-                    </label>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        );
-      })}
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                            <FileBadge className="w-5 h-5 text-gray-500" />
+                            License Information
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <DetailItem label="License Number" value={v.licenseNumber} />
+                            <DetailItem label="License Type" value={v.licenseType} />
+                            <DetailItem label="Issued By" value={v.licenseIssuedBy} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                            <Home className="w-5 h-5 text-gray-500" />
+                            Organization
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <DetailItem label="Organization" value={v.organization} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-gray-500" />
+                            Submission Details
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <DetailItem
+                              label="Submitted At"
+                              value={new Date(v.submittedAt).toLocaleString()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        {v.idProofUrl && (
+                          <DocumentSection
+                            title="ID Proof"
+                            url={v.idProofUrl}
+                            verified={verifiedDocs[v._id]?.idProof || false}
+                            onChange={(checked) => handleCheckboxChange(v._id, "idProof", checked)}
+                          />
+                        )}
+                        {v.licenseCertificateUrl && (
+                          <DocumentSection
+                            title="License Certificate"
+                            url={v.licenseCertificateUrl}
+                            verified={verifiedDocs[v._id]?.license || false}
+                            onChange={(checked) => handleCheckboxChange(v._id, "license", checked)}
+                          />
+                        )}
+                        {v.addressProofUrl && (
+                          <DocumentSection
+                            title="Address Proof"
+                            url={v.addressProofUrl}
+                            verified={verifiedDocs[v._id]?.address || false}
+                            onChange={(checked) => handleCheckboxChange(v._id, "address", checked)}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+                      <Button
+                        variant="outline"
+                        onClick={() => setActiveModal(null)}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        variant="success"
+                        onClick={() => updateStatus(v._id, "APPROVED")}
+                        disabled={
+                          !verifiedDocs[v._id]?.idProof ||
+                          !verifiedDocs[v._id]?.license ||
+                          !verifiedDocs[v._id]?.address
+                        }
+                        className="flex items-center gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        Approve Request
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => updateStatus(v._id, "REJECTED")}
+                        className="flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Reject Request
+                      </Button>
+                    </div>
+                  </motion.div>
+                )
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="mb-2 last:mb-0">
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className="text-sm text-gray-900">{value || "-"}</p>
+    </div>
+  );
+}
+
+function DocumentSection({
+  title,
+  url,
+  verified,
+  onChange,
+}: {
+  title: string;
+  url: string;
+  verified: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-b border-gray-200">
+        <h4 className="font-medium text-gray-900">{title}</h4>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            checked={verified}
+            disabled={verified}
+            onChange={(e) => onChange(e.target.checked)}
+          />
+          <span className={`text-sm ${verified ? "text-green-600" : "text-gray-600"}`}>
+            {verified ? "Verified" : "Mark as verified"}
+          </span>
+        </label>
+      </div>
+      <div className="p-4">
+        <iframe
+          src={url}
+          className="w-full h-96 border border-gray-200 rounded-md"
+          title={`Document: ${title}`}
+        />
+        <div className="mt-3 flex justify-end">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Open in new tab
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
