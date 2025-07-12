@@ -40,7 +40,7 @@ export default function HospitalOrdersPage() {
     const pending = data.filter((order) => order.manufacturerStatus === 'Pending').length;
     const approvedToday = data.filter(
       (order) =>
-        order.manufacturerStatus === 'Approved' &&
+        order.manufacturerStatus === 'Delivered' &&
         order.deliveryDate?.slice(0, 10) === today
     ).length;
     const highPriority = data.filter((order) => {

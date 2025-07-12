@@ -1,171 +1,130 @@
-'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/ui/table'
-import { Badge } from '@/app/ui/badge'
-import { Button } from '@/app/ui/button'
+"use client";
 
-const mockOrders = [
-  {
-    id: 'ORD001',
-    vendor: 'MediSupply Co.',
-    hospital: 'City General Hospital',
-    drugs: ['Paracetamol 500mg', 'Amoxicillin 250mg'],
-    quantity: 1000,
-    status: 'pending',
-    orderDate: '2024-03-15',
-    totalValue: 500,
-  },
-  {
-    id: 'ORD002',
-    vendor: 'PharmaTech Inc.',
-    hospital: 'St. Mary Medical Center',
-    drugs: ['Ibuprofen 400mg', 'Omeprazole 20mg'],
-    quantity: 800,
-    status: 'processing',
-    orderDate: '2024-03-14',
-    totalValue: 640,
-  },
-  {
-    id: 'ORD003',
-    vendor: 'Global Meds Ltd.',
-    hospital: 'Regional Health Center',
-    drugs: ['Metformin 500mg'],
-    quantity: 600,
-    status: 'shipped',
-    orderDate: '2024-03-13',
-    totalValue: 480,
-  },
-]
+import { useEffect, useState } from 'react';
 
-export default function VendorOrdersPage() {
+interface PharmacyOrder {
+  _id: string;
+  orderId: string;
+  hospitalName: string;
+  type: string;
+  medicineName: string;
+  quantity: number;
+  deliveryDate: string;
+  manufacturerStatus: string;
+}
+
+export default function PharmacyOrdersPage() {
+  const [orders, setOrders] = useState<PharmacyOrder[]>([]);
+  const [stats, setStats] = useState({
+    pending: 0,
+    approvedToday: 0,
+    highPriority: 0,
+    total: 0,
+  });
+
+  useEffect(() => {
+    fetch('/api/orderp')
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data || []);
+        calculateStats(data || []);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch orders:', error);
+      });
+  }, []);
+
+  const calculateStats = (data: PharmacyOrder[]) => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const pending = data.filter((order) => order.manufacturerStatus === 'Pending').length;
+    const approvedToday = data.filter(
+      (order) =>
+        order.manufacturerStatus === 'Delivered' &&
+        order.deliveryDate?.slice(0, 10) === today
+    ).length;
+    const highPriority = data.filter((order) => {
+      if (!order.deliveryDate) return false;
+      const delivery = new Date(order.deliveryDate);
+      const diffDays = Math.ceil((delivery.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 3;
+    }).length;
+    const total = data.length;
+
+    setStats({ pending, approvedToday, highPriority, total });
+  };
+
+  const getPriority = (deliveryDate: string) => {
+    if (!deliveryDate) return 'Unknown';
+    const today = new Date();
+    const delivery = new Date(deliveryDate);
+    const diffDays = Math.ceil((delivery.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 3) return 'High';
+    if (diffDays <= 7) return 'Medium';
+    return 'Low';
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Vendor Orders</h1>
-        <p className="text-muted-foreground">
-          Monitor and manage orders between vendors and hospitals
-        </p>
+    <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+      <h1 className="text-4xl font-bold mb-10 text-gray-800">Pharmacy Requests</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-yellow-400">
+          <h2 className="text-lg font-medium text-gray-600">Pending Requests</h2>
+          <p className="text-3xl font-bold text-yellow-500 mt-2">{stats.pending}</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-green-500">
+          <h2 className="text-lg font-medium text-gray-600">Approved Today</h2>
+          <p className="text-3xl font-bold text-green-600 mt-2">{stats.approvedToday}</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-red-500">
+          <h2 className="text-lg font-medium text-gray-600">High Priority</h2>
+          <p className="text-3xl font-bold text-red-600 mt-2">{stats.highPriority}</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-blue-500">
+          <h2 className="text-lg font-medium text-gray-600">Total Requests</h2>
+          <p className="text-3xl font-bold text-blue-600 mt-2">{stats.total}</p>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              In progress
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">
-              Orders delivered
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$12,450</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
-            </p>
-          </CardContent>
-        </Card>
+      <div className="overflow-x-auto shadow-lg rounded-xl">
+        <table className="min-w-full text-sm text-left bg-white border border-gray-200">
+          <thead className="bg-blue-50 text-blue-900">
+            <tr>
+              <th className="px-6 py-3 font-medium">Order ID</th>
+              <th className="px-6 py-3 font-medium">Pharmacy</th>
+              <th className="px-6 py-3 font-medium">Drug</th>
+              <th className="px-6 py-3 font-medium">Quantity</th>
+              <th className="px-6 py-3 font-medium">Priority</th>
+              <th className="px-6 py-3 font-medium">Status</th>
+              <th className="px-6 py-3 font-medium">Request Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-6 text-gray-500">
+                  No hospital orders found.
+                </td>
+              </tr>
+            ) : (
+              orders.map((order) => (
+                <tr key={order._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3 font-medium text-gray-800">{order.orderId}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.hospitalName}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.medicineName}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.quantity}</td>
+                  <td className={`px-6 py-3 font-medium ${getPriority(order.deliveryDate) === 'High' ? 'text-red-600' : getPriority(order.deliveryDate) === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>{getPriority(order.deliveryDate)}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.manufacturerStatus || 'Pending'}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.deliveryDate?.slice(0, 10)}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Hospital</TableHead>
-                <TableHead>Drugs</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Order Date</TableHead>
-                <TableHead>Total Value</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.vendor}</TableCell>
-                  <TableCell>{order.hospital}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {order.drugs.map((drug) => (
-                        <div key={drug} className="text-sm">
-                          {drug}
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{order.quantity}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        order.status === 'shipped'
-                          ? 'success'
-                          : order.status === 'processing'
-                          ? 'secondary'
-                          : 'default'
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{order.orderDate}</TableCell>
-                  <TableCell>${order.totalValue}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                      {order.status === 'pending' && (
-                        <Button variant="outline" size="sm">
-                          Approve
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
-  )
-} 
+  );
+}
