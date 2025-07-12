@@ -7,7 +7,20 @@ import dbConnect from '@/lib/db/mongodborder';
 import PharmacyOrder from '@/lib/models/orderp';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 import Medicine from '@/lib/models/medicine';
+import { User } from '@/lib/models/User';
 import { v4 as uuidv4 } from 'uuid';
+
+export async function GET() {
+  await dbConnect();
+
+  try {
+    const orders = await PharmacyOrder.find({}).sort({ createdAt: -1 });
+    return NextResponse.json(orders, { status: 200 });
+  } catch (error) {
+    console.error('[DEBUG_ORDER_FETCH_ERROR]', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -21,6 +34,13 @@ export async function POST(req: NextRequest) {
   try {
     const { medicineId, vendorId, hospitalName, deliveryDate, quantity } = await req.json();
     const today = new Date();
+
+    // Fetch user details from DB to get organization
+    const hospitalUser = await User.findById(user._id).select('organization');
+    if (!hospitalUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
 
     // Get the minimum offer price for that medicine from this vendor
     const bestBatch = await VendorInventory.findOne({
@@ -49,7 +69,7 @@ export async function POST(req: NextRequest) {
       medicineName: medicineDoc.brandName,
       quantity,
       price: avgPrice,
-      hospitalName,
+      hospitalName: hospitalUser.organization,
       totalValue,
       deliveryDate: new Date(deliveryDate),
       orderDate: new Date(),
@@ -64,3 +84,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
+
+
+
+
+

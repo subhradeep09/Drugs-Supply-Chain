@@ -2,15 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 
 export default function PerformanceMonitoringPage() {
@@ -48,7 +41,6 @@ export default function PerformanceMonitoringPage() {
     fetchData();
   }, [filter]);
 
-  // Color palette for charts
   const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F59E0B'];
 
   if (loading) {
@@ -65,7 +57,6 @@ export default function PerformanceMonitoringPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header with filter */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Performance Monitoring</h1>
@@ -81,100 +72,33 @@ export default function PerformanceMonitoringPage() {
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
         </div>
       </div>
 
-      {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <MetricCard 
-          label="Orders Processed" 
-          value={metrics.totalOrders} 
-          icon="📦"
-          trend={metrics.totalOrders > 1000 ? 'up' : 'down'}
-          change={metrics.totalOrders > 1000 ? '12%' : '5%'}
-        />
-        <MetricCard 
-          label="Avg. Delivery Time" 
-          value={`${metrics.avgDeliveryTime} hrs`} 
-          icon="⏱️"
-          trend={parseFloat(metrics.avgDeliveryTime) < 4 ? 'down' : 'up'}
-          change={parseFloat(metrics.avgDeliveryTime) < 4 ? '8%' : '3%'}
-        />
-        <MetricCard 
-          label="Fulfillment Rate" 
-          value={metrics.fulfillmentRate} 
-          icon="✅"
-          trend={parseFloat(metrics.fulfillmentRate) > 95 ? 'up' : 'down'}
-          change={parseFloat(metrics.fulfillmentRate) > 95 ? '2%' : '1%'}
-        />
-        <MetricCard 
-          label="Low Stock Incidents" 
-          value={metrics.lowStockIncidents} 
-          icon="⚠️"
-          trend={metrics.lowStockIncidents < 15 ? 'down' : 'up'}
-          change={metrics.lowStockIncidents < 15 ? '10%' : '5%'}
-        />
-        <MetricCard 
-          label="Expired Drugs" 
-          value={metrics.expiredDrugs} 
-          icon="💊"
-          trend={metrics.expiredDrugs < 5 ? 'down' : 'up'}
-          change={metrics.expiredDrugs < 5 ? '15%' : '8%'}
-        />
+        <MetricCard label="Orders Processed" value={metrics.totalOrders} icon="📦" trend="up" change="12%" />
+        <MetricCard label="Avg. Delivery Time" value={`${metrics.avgDeliveryTime} hrs`} icon="⏱️" trend="down" change="8%" />
+        <MetricCard label="Fulfillment Rate" value={metrics.fulfillmentRate} icon="✅" trend="up" change="2%" />
+        <MetricCard label="Low Stock Incidents" value={metrics.lowStockIncidents} icon="⚠️" trend="down" change="10%" />
+        <MetricCard label="Expired Drugs" value={metrics.expiredDrugs} icon="💊" trend="up" change="5%" />
       </div>
 
-      {/* Charts Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Trends & Analytics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ChartCard 
-            title="Vendors with Highest Orders" 
-            data={chartsData.vendorOrders} 
-            dataKey="vendor" 
-            valueKey="orders" 
-            color={colors[0]}
-          />
-          <ChartCard 
-            title="Top Ordered Drugs" 
-            data={chartsData.topDrugs} 
-            dataKey="medicine" 
-            valueKey="count" 
-            color={colors[1]}
-          />
-          <ChartCard 
-            title="Top Ordering Hospitals" 
-            data={chartsData.topHospitals} 
-            dataKey="hospital" 
-            valueKey="orders" 
-            color={colors[2]}
-          />
-          <ChartCard 
-            title="Top Ordering Pharmacies" 
-            data={chartsData.topPharmacies} 
-            dataKey="pharmacy" 
-            valueKey="orders" 
-            color={colors[3]}
-          />
+          <ChartCard title="Vendors with Highest Orders" data={chartsData.vendorOrders} dataKey="vendor" valueKey="orders" color={colors[0]} />
+          <ChartCard title="Top Ordered Drugs" data={chartsData.topDrugs} dataKey="medicine" valueKey="count" color={colors[1]} />
+          <ChartCard title="Top Ordering Hospitals" data={chartsData.topHospitals} dataKey="hospital" valueKey="orders" color={colors[2]} />
+          <ChartCard title="Top Ordering Pharmacies" data={chartsData.topPharmacies} dataKey="pharmacy" valueKey="orders" color={colors[3]} />
         </div>
       </div>
     </div>
   );
 }
 
-function MetricCard({ 
-  label, 
-  value, 
-  icon,
-  trend,
-  change
-}: { 
-  label: string; 
-  value: string | number; 
+function MetricCard({ label, value, icon, trend, change }: {
+  label: string;
+  value: string | number;
   icon: string;
   trend: 'up' | 'down';
   change: string;
@@ -197,13 +121,7 @@ function MetricCard({
   );
 }
 
-function ChartCard({
-  title,
-  data,
-  dataKey,
-  valueKey,
-  color,
-}: {
+function ChartCard({ title, data, dataKey, valueKey, color }: {
   title: string;
   data: any[];
   dataKey: string;
@@ -217,25 +135,10 @@ function ChartCard({
         <BarChart data={data} layout="vertical" margin={{ left: 30 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
           <XAxis type="number" axisLine={false} tickLine={false} />
-          <YAxis 
-            dataKey={dataKey} 
-            type="category" 
-            width={80}
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip 
-            contentStyle={{
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-              border: 'none'
-            }}
-          />
+          <YAxis dataKey={dataKey} type="category" width={80} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+          <Tooltip />
           <Bar dataKey={valueKey} radius={[0, 4, 4, 0]}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={color} opacity={0.8} />
-            ))}
+            {data.map((_, i) => <Cell key={i} fill={color} opacity={0.85} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>

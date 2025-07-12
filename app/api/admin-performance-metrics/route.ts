@@ -1,11 +1,9 @@
-// FILE: app/api/performance-metrics/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import PharmacyOrder from '@/lib/models/orderp';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
-
+import Medicine from '@/lib/models/medicine'; // ✅ FIX: Ensure schema is registered
 
 export async function GET(req: NextRequest) {
   await dbConnect();

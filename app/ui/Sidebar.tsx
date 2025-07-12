@@ -17,7 +17,7 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
   ADMIN: [
     { title: 'Dashboard', href: '/dashboard/admin', icon: Gauge },
     { title: 'Hospital Requests', href: '/dashboard/admin/HospitalRequests', icon: ClipboardCheck },
-    { title: 'Vendor Orders', href: '/dashboard/admin/VendorOrders', icon: ShoppingCart },
+    { title: 'Pharmacy Requests', href: '/dashboard/admin/VendorOrders', icon: ShoppingCart },
     { title: 'Supply Chain', href: '/dashboard/admin/SupplyChainTracker', icon: Network },
     { title: 'Inventory', href: '/dashboard/admin/InventoryOverview', icon: PackageCheck },
     { title: 'New User Requests', href: '/dashboard/admin/NewUser', icon: Users },
