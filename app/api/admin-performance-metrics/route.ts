@@ -6,6 +6,7 @@ import Order from '@/lib/models/orderh';
 import PharmacyOrder from '@/lib/models/orderp';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 
+
 export async function GET(req: NextRequest) {
   await dbConnect();
 
@@ -20,11 +21,21 @@ export async function GET(req: NextRequest) {
 
   const [hospitalOrdersRaw, pharmacyOrdersRaw] = await Promise.all([
     Order.find({ createdAt: { $gte: fromDate } })
-      .populate('userId', 'name')
-      .populate('medicineId', 'brandName'),
+      .populate({
+        path: 'medicineId',
+        populate: {
+          path: 'userId',
+          select: 'name',
+        },
+      }),
     PharmacyOrder.find({ createdAt: { $gte: fromDate } })
-      .populate('userId', 'name')
-      .populate('medicineId', 'brandName'),
+      .populate({
+        path: 'medicineId',
+        populate: {
+          path: 'userId',
+          select: 'name',
+        },
+      }),
   ]);
 
   const allOrders = [...hospitalOrdersRaw, ...pharmacyOrdersRaw];
@@ -65,7 +76,7 @@ export async function GET(req: NextRequest) {
   const pharmacyOrders: Record<string, number> = {};
 
   const processOrder = (order: any, type: 'Hospital' | 'Pharmacy') => {
-    const vendorName = order.userId?.name || 'Unknown Vendor';
+    const vendorName = order.medicineId?.userId?.name || 'Unknown Vendor';
     const medicineName = order.medicineId?.brandName || order.medicineName || 'Unknown Drug';
 
     vendorOrders[vendorName] = (vendorOrders[vendorName] || 0) + 1;
