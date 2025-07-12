@@ -1,4 +1,3 @@
-// contracts/DeliveredOrders.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -11,9 +10,22 @@ contract DeliveredOrders {
         uint256 quantity;
         string vendorId;
         string vendorName;
+        uint256 timestamp;
     }
 
     Order[] public deliveredOrders;
+
+    // 🔥 Emit this event to track on frontend
+    event OrderDelivered(
+        string orderId,
+        string hospitalName,
+        string medicineId,
+        string medicineName,
+        uint256 quantity,
+        string vendorId,
+        string vendorName,
+        uint256 timestamp
+    );
 
     function addDeliveredOrder(
         string memory orderId,
@@ -24,7 +36,19 @@ contract DeliveredOrders {
         string memory vendorId,
         string memory vendorName
     ) public {
-        deliveredOrders.push(Order(orderId, hospitalName, medicineId, medicineName, quantity, vendorId, vendorName));
+        uint256 ts = block.timestamp;
+        deliveredOrders.push(Order(orderId, hospitalName, medicineId, medicineName, quantity, vendorId, vendorName, ts));
+
+        emit OrderDelivered(
+            orderId,
+            hospitalName,
+            medicineId,
+            medicineName,
+            quantity,
+            vendorId,
+            vendorName,
+            ts
+        );
     }
 
     function getDeliveredOrders() public view returns (Order[] memory) {

@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import DeliveredOrdersABI from '@/contracts/DeliveredOrders.json';
+import ConnectWallet from '@/app/components/ConnectWallet/page'; 
 
 interface Order {
   _id: string;
@@ -16,7 +17,7 @@ interface Order {
   totalValue: number;
 }
 
-const CONTRACT_ADDRESS = "0x5A86858aA3b595FD6663c2296741eF4cd8BC4d01"; // Replace with actual deployed address
+const CONTRACT_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Replace with actual deployed address
 
 export default function TrackOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -143,6 +144,7 @@ export default function TrackOrdersPage() {
     <div className="min-h-screen bg-gray-100 px-6 py-10">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <h1 className="text-3xl font-semibold text-gray-800">📦 Track Incoming Orders</h1>
+        <ConnectWallet />
         <div className="flex gap-3">
           <input
             type="text"
