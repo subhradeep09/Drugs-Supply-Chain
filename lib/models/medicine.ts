@@ -1,4 +1,4 @@
-// lib/models/Medicine.ts
+// lib/models/medicine.ts
 
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
