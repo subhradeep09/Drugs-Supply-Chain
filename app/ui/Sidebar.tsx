@@ -104,7 +104,7 @@ export default function Sidebar() {
 
   return (
     <div className={cn(
-      "relative h-full flex flex-col border-r transition-all duration-300 ease-in-out",
+      "fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col border-r transition-all duration-300 ease-in-out z-40",
       isCollapsed ? "w-20" : "w-64",
       "bg-gradient-to-b from-indigo-50 to-blue-50"
     )}>

@@ -16,6 +16,10 @@ const ManufacturerDashboardPage: React.FC = () => {
   const [showDispatchForm, setShowDispatchForm] = useState(false);
   const fileInputInvoiceRef = useRef<HTMLInputElement>(null);
   const fileInputProofRef = useRef<HTMLInputElement>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState('');
+  const [orderDetails, setOrderDetails] = useState<any>(null);
 
   // State for metrics and orders
   const [metrics, setMetrics] = useState({
@@ -264,97 +268,28 @@ const ManufacturerDashboardPage: React.FC = () => {
     }
   };
 
+  // Helper to fetch order details
+  const handleViewDetails = async (orderId: string) => {
+    setDetailsModalOpen(true);
+    setDetailsLoading(true);
+    setDetailsError('');
+    setOrderDetails(null);
+    try {
+      const res = await fetch(`/api/order-details?orderId=${orderId}`);
+      if (!res.ok) throw new Error('Failed to fetch order details');
+      const data = await res.json();
+      setOrderDetails(data);
+    } catch (err: any) {
+      setDetailsError(err.message || 'Error fetching details');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
-      <header className="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-6 z-10">
-        <div className="flex items-center">
-          <div className="text-xl font-bold text-blue-900 mr-8">
-            <FontAwesomeIcon icon={faPills} className="mr-2" />
-            MedSupply
-          </div>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search orders, batches, invoices..."
-              className="w-96 h-10 pl-10 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 text-gray-400" />
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button 
-              className="relative p-2 rounded-full hover:bg-gray-100 cursor-pointer"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              <FontAwesomeIcon icon={faBell} className="text-gray-600" />
-              <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span>
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                <div className="p-3 border-b border-gray-200 font-medium">Notifications</div>
-                <div className="max-h-96 overflow-y-auto">
-                  <div className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
-                    <div className="text-sm font-medium">New order received</div>
-                    <div className="text-xs text-gray-500">10 minutes ago</div>
-                  </div>
-                  <div className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
-                    <div className="text-sm font-medium">Delivery confirmation pending</div>
-                    <div className="text-xs text-gray-500">2 hours ago</div>
-                  </div>
-                  <div className="p-3 hover:bg-gray-50 cursor-pointer">
-                    <div className="text-sm font-medium">SLA breach warning</div>
-                    <div className="text-xs text-gray-500">Yesterday</div>
-                  </div>
-                </div>
-                <div className="p-2 text-center text-sm text-blue-600 border-t border-gray-200 cursor-pointer hover:bg-gray-50">
-                  View all notifications
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="relative">
-            <div 
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            >
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                <FontAwesomeIcon icon={faUser} />
-              </div>
-              <div>
-                <div className="text-sm font-medium">John Smith</div>
-                <div className="text-xs text-gray-500">Vendor Admin</div>
-              </div>
-              <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-xs" />
-            </div>
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faUserCircle} className="text-gray-500" />
-                  <span className="text-sm">Profile</span>
-                </div>
-                <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faCog} className="text-gray-500" />
-                  <span className="text-sm">Settings</span>
-                </div>
-                <div className="border-t border-gray-200"></div>
-                <div className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2 text-red-600">
-                  <FontAwesomeIcon icon={faSignOutAlt} />
-                  <button className="text-sm" onClick={() => signOut({ callbackUrl: '/sign-in' })}>Logout</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <div className="flex flex-1">
+        <main className="flex-1 overflow-y-auto bg-gray-50 pl-64 pt-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Manufacturer Dashboard</h1>
@@ -545,7 +480,10 @@ const ManufacturerDashboardPage: React.FC = () => {
                                 </button>
                               </div>
                             ) : (
-                              <button className="text-blue-600 hover:text-blue-900 cursor-pointer whitespace-nowrap">
+                              <button
+                                className="text-blue-600 hover:text-blue-900 cursor-pointer whitespace-nowrap"
+                                onClick={() => handleViewDetails(order.orderId || order._id || order.id)}
+                              >
                                 View Details
                               </button>
                             )}
@@ -823,6 +761,33 @@ const ManufacturerDashboardPage: React.FC = () => {
                 Submit Dispatch
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {detailsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setDetailsModalOpen(false)}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-blue-700">Order Details</h2>
+            {detailsLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading...</div>
+            ) : detailsError ? (
+              <div className="text-center py-8 text-red-500">{detailsError}</div>
+            ) : orderDetails ? (
+              <div className="space-y-3">
+                <div><span className="font-medium text-gray-700">Hospital/Pharmacy:</span> {orderDetails.hospitalName}</div>
+                <div><span className="font-medium text-gray-700">Medicine ID:</span> {orderDetails.medicineId}</div>
+                <div><span className="font-medium text-gray-700">Vendor:</span> {orderDetails.vendorName}</div>
+                {/* Add more fields as needed */}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
