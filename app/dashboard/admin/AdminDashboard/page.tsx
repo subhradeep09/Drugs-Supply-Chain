@@ -239,9 +239,9 @@ const AdminDashboard: React.FC = () => {
     <main className="pt-0 px-4 pb-8">
       <div className="flex justify-center mb-0">
         <img 
-          src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" 
+          src="/logo.png" 
           alt="Admin Dashboard Logo" 
-          className="h-42 w-auto object-contain"
+          className="h-21 w-21 object-contain"
         />
       </div>
 

@@ -93,7 +93,7 @@ export const InvoicePDF = ({ invoice }: InvoiceProps) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Logo */}
-      <Image style={styles.logo} src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" />
+      <Image style={styles.logo} src="/logo.png" />
 
       <Text style={styles.header}>Invoice</Text>
 

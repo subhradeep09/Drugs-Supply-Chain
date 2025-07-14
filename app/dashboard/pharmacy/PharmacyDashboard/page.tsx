@@ -178,9 +178,9 @@ const PharmacyDashboardPage = () => {
         {/* Header */}
         <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6">
           <div className="flex items-center">
-            <div className="text-xl font-semibold text-blue-700">
-              Hospital Dashboard
-            </div>
+             <div className="text-xl font-semibold text-blue-700">
+               Pharmacy Dashboard
+             </div>
             <div className="relative">
               <input
                 type="text"

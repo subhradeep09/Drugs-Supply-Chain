@@ -96,9 +96,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2 hover-lift">
-              <span className="text-xl font-bold gradient-text">
-                DrugChain
-              </span>
+              <img src="/logo.png" alt="Logo" className="h-21 w-21 object-contain" />
             </Link>
             <div className="hidden md:ml-8 md:flex md:space-x-6">
               {filteredNavigation.map((item) => (

@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -172,111 +171,9 @@ const HospitalDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6">
-          <div className="flex items-center">
-            <div className="text-xl font-semibold text-blue-700">
-              Hospital Dashboard
-            </div>
-            <div className="relative ml-4">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 relative cursor-pointer !rounded-button whitespace-nowrap"
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                <i className="fas fa-bell text-gray-600"></i>
-                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                  2
-                </span>
-              </button>
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
-                  <div className="p-3 border-b border-gray-200">
-                    <h3 className="font-semibold">Notifications</h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.map(notification => (
-                      <div
-                        key={notification.id}
-                        className={`p-3 border-b border-gray-100 hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                      >
-                        <div className="flex items-start">
-                          <div className={`w-2 h-2 rounded-full mt-2 mr-2 ${!notification.isRead ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
-                          <div>
-                            <p className="text-sm">{notification.message}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-2 text-center border-t border-gray-200">
-                    <button className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer !rounded-button whitespace-nowrap">
-                      Mark all as read
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* User Profile */}
-            <div className="relative">
-              <button
-                className="flex items-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap"
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-white">
-                  <i className="fas fa-user-md"></i>
-                </div>
-                <span className="text-sm font-medium">Dr. Sarah Johnson</span>
-                <i className={`fas fa-chevron-down text-xs text-gray-500 transition-transform ${showUserDropdown ? 'transform rotate-180' : ''}`}></i>
-              </button>
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
-                  <div className="p-3 border-b border-gray-200">
-                    <h3 className="font-semibold">Dr. Sarah Johnson</h3>
-                    <p className="text-xs text-gray-500">Head of Cardiology</p>
-                  </div>
-                  <div>
-                    <a href="#profile" className="block p-3 hover:bg-gray-50 text-sm">
-                      <i className="fas fa-user mr-2 text-gray-500"></i> My Profile
-                    </a>
-                    <a href="#settings" className="block p-3 hover:bg-gray-50 text-sm">
-                      <i className="fas fa-cog mr-2 text-gray-500"></i> Settings
-                    </a>
-                    <a href="#help" className="block p-3 hover:bg-gray-50 text-sm">
-                      <i className="fas fa-question-circle mr-2 text-gray-500"></i> Help Center
-                    </a>
-                    <button
-                      className="w-full text-left p-3 hover:bg-gray-50 text-sm border-t border-gray-100 cursor-pointer"
-                      onClick={() => signOut({ callbackUrl: '/sign-in' })}
-                    >
-                      <i className="fas fa-sign-out-alt mr-2 text-gray-500"></i> Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Main Dashboard Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-100">
-          <div className="mb-6">
+    <div className="overflow-y-auto p-6 bg-gray-100" style={{ minHeight: '100vh' }}>
+      <main>
+        <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-800">Dashboard Overview</h1>
             <p className="text-gray-600">Welcome back, Dr. Johnson. Here's what's happening today.</p>
           </div>
@@ -954,7 +851,6 @@ const HospitalDashboardPage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 };

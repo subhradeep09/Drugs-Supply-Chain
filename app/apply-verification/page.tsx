@@ -168,7 +168,7 @@ export default function ApplyVerificationPage() {
   const renderStep = () => {
     const leftPanel = (
       <div className="bg-indigo-50 dark:bg-zinc-800 flex flex-col items-center justify-start p-6 relative space-y-4">
-        <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" alt="PharmaChain Logo" className="w-52 h-52 object-contain mt-4" />
+        <img src="/logo.png" alt="PharmaChain Logo" className="w-52 h-52 object-contain mt-4" />
         <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/823dd0f268f3b6a3cdbe389d8a47602d9f6a5bb4/verificationpage.png" alt="Verification" className="w-11/10 max-h-96 object-contain -mt-6 scale-110" />
         <h2 className="text-xl text-center font-semibold text-indigo-700 dark:text-indigo-300 mt-4">Begin Your Verification</h2>
         <p className="text-sm text-center text-gray-600 dark:text-gray-400 max-w-xs">Fill out your personal details to get started.</p>
