@@ -2,10 +2,18 @@
 
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
+export interface IDispatchedBatch {
+  batchId: Types.ObjectId;
+  batchNumber: string;
+  expiryDate: Date;
+  quantity: number;
+  price: number;
+}
+
 export interface IPharmacyOrder extends Document {
   userId: Types.ObjectId; // reference to User
   orderId: string;
-  medicineId: string;
+  medicineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine' };
   medicineName: string;
   quantity: number;
   price: number;
@@ -14,7 +22,21 @@ export interface IPharmacyOrder extends Document {
   deliveryDate: Date;
   orderDate: Date;
   manufacturerStatus: string;
+  dispatchedBatches: IDispatchedBatch[];
 }
+
+
+const DispatchedBatchSchema = new Schema<IDispatchedBatch>({
+  batchId: {
+    type: Schema.Types.ObjectId,
+    ref: 'VendorInventory',
+    required: true,
+  },
+  batchNumber: String,
+  expiryDate: Date,
+  quantity: Number,
+  price: Number,
+});
 
 const PharmacyOrderSchema = new Schema<IPharmacyOrder>(
   {
@@ -24,7 +46,7 @@ const PharmacyOrderSchema = new Schema<IPharmacyOrder>(
       required: true,
     },
     orderId: String,
-    medicineId: String,
+    medicineId:{type: Schema.Types.ObjectId, ref: 'Medicine', required: true},
     medicineName: String,
     quantity: Number,
     price: Number,
@@ -36,6 +58,7 @@ const PharmacyOrderSchema = new Schema<IPharmacyOrder>(
       type: String,
       default: "Pending",
     },
+    dispatchedBatches: [DispatchedBatchSchema],
   },
   { timestamps: true }
 );

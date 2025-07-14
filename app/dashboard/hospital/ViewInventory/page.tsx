@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 
 interface InventoryItem {
-  _id: string;
+  inventoryId: string;       // from HospitalInventory _id
+  medicineId: string;        // actual medicine ObjectId
   medicineName: string;
   totalStock: number;
   lastOrderedDate: string;
@@ -21,12 +22,12 @@ export default function HospitalInventoryPage() {
           setInventory(data);
         } else {
           console.error('Invalid inventory format', data);
-          setInventory([]);
         }
-        setLoading(false);
       })
       .catch(err => {
         console.error('Inventory fetch failed:', err);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
@@ -38,11 +39,13 @@ export default function HospitalInventoryPage() {
 
         {loading ? (
           <p className="text-center text-gray-600">Loading...</p>
+        ) : inventory.length === 0 ? (
+          <p className="text-center text-gray-500">No inventory data available.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
               <thead>
-                <tr className="bg-gray-100 text-left">
+                <tr className="bg-gray-100 text-left text-sm font-semibold">
                   <th className="py-2 px-4">Medicine Name</th>
                   <th className="py-2 px-4">Total Stock</th>
                   <th className="py-2 px-4">Last Ordered</th>
@@ -50,30 +53,22 @@ export default function HospitalInventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {inventory.length > 0 ? (
-                  inventory.map(item => (
-                    <tr key={item._id} className="border-t">
-                      <td className="py-2 px-4">{item.medicineName}</td>
-                      <td className="py-2 px-4">{item.totalStock}</td>
-                      <td className="py-2 px-4">
-                        {new Date(item.lastOrderedDate).toLocaleDateString()}
-                      </td>
-                      <td className="py-2 px-4">
-                        {item.totalStock < 10 ? (
-                          <span className="text-red-600 font-semibold">Low Stock</span>
-                        ) : (
-                          <span className="text-green-600 font-semibold">OK</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="text-center text-gray-500 py-4">
-                      No inventory data available.
+                {inventory.map(item => (
+                  <tr key={item.inventoryId} className="border-t text-sm">
+                    <td className="py-2 px-4 font-medium text-gray-800">{item.medicineName}</td>
+                    <td className="py-2 px-4">{item.totalStock}</td>
+                    <td className="py-2 px-4">
+                      {new Date(item.lastOrderedDate).toLocaleDateString('en-IN')}
+                    </td>
+                    <td className="py-2 px-4">
+                      {item.totalStock < 10 ? (
+                        <span className="text-red-600 font-semibold">Low Stock</span>
+                      ) : (
+                        <span className="text-green-600 font-semibold">OK</span>
+                      )}
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>

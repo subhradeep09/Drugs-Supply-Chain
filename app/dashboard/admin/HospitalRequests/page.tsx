@@ -1,53 +1,64 @@
-'use client';
+"use client";
+
 import { useEffect, useState } from 'react';
 
+interface Order {
+  _id: string;
+  orderId: string;
+  hospitalName: string;
+  type: string;
+  medicineName: string;
+  quantity: number;
+  deliveryDate: string;
+  manufacturerStatus: string;
+}
+
 export default function HospitalOrdersPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({
     pending: 0,
     approvedToday: 0,
     highPriority: 0,
-    total: 0
+    total: 0,
   });
 
   useEffect(() => {
     fetch('/api/orderh')
-      .then(res => res.json())
-      .then(data => {
-        setOrders(data);
-        calculateStats(data);
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data || []);
+        calculateStats(data || []);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch orders:', error);
       });
   }, []);
 
-  const calculateStats = (data) => {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
+  const calculateStats = (data: Order[]) => {
+    const today = new Date().toISOString().slice(0, 10);
 
-    const pending = data.filter(order => order.manufacturerStatus === "Pending").length;
-    const approvedToday = data.filter(order =>
-      order.manufacturerStatus === "Approved" &&
-      order.deliveryDate?.slice(0, 10) === today
+    const pending = data.filter((order) => order.manufacturerStatus === 'Pending').length;
+    const approvedToday = data.filter(
+      (order) =>
+        order.manufacturerStatus === 'Delivered' &&
+        order.deliveryDate?.slice(0, 10) === today
     ).length;
-    const highPriority = data.filter(order => {
+    const highPriority = data.filter((order) => {
       if (!order.deliveryDate) return false;
       const delivery = new Date(order.deliveryDate);
-      const diffDays = Math.ceil((delivery - new Date()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((delivery.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
       return diffDays <= 3;
     }).length;
     const total = data.length;
 
-    setStats({
-      pending,
-      approvedToday,
-      highPriority,
-      total
-    });
+    setStats({ pending, approvedToday, highPriority, total });
   };
 
-  const getPriority = (deliveryDate) => {
+  const getPriority = (deliveryDate: string) => {
     if (!deliveryDate) return 'Unknown';
     const today = new Date();
     const delivery = new Date(deliveryDate);
-    const diffDays = Math.ceil((delivery - today) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((delivery.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays <= 3) return 'High';
     if (diffDays <= 7) return 'Medium';
@@ -55,58 +66,61 @@ export default function HospitalOrdersPage() {
   };
 
   return (
-    <div className="p-10">
-      <h1 className="text-3xl mb-5 font-bold">Hospital Requests</h1>
+    <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+      <h1 className="text-4xl font-bold mb-10 text-gray-800">Hospital Requests</h1>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h2 className="text-xl font-semibold text-gray-700">Pending Requests</h2>
-          <p className="text-2xl font-bold text-yellow-500">{stats.pending}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-yellow-400">
+          <h2 className="text-lg font-medium text-gray-600">Pending Requests</h2>
+          <p className="text-3xl font-bold text-yellow-500 mt-2">{stats.pending}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h2 className="text-xl font-semibold text-gray-700">Approved Today</h2>
-          <p className="text-2xl font-bold text-green-600">{stats.approvedToday}</p>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-green-500">
+          <h2 className="text-lg font-medium text-gray-600">Approved Today</h2>
+          <p className="text-3xl font-bold text-green-600 mt-2">{stats.approvedToday}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h2 className="text-xl font-semibold text-gray-700">High Priority</h2>
-          <p className="text-2xl font-bold text-red-600">{stats.highPriority}</p>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-red-500">
+          <h2 className="text-lg font-medium text-gray-600">High Priority</h2>
+          <p className="text-3xl font-bold text-red-600 mt-2">{stats.highPriority}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h2 className="text-xl font-semibold text-gray-700">Total Requests</h2>
-          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+        <div className="bg-white p-6 rounded-xl shadow text-center border-t-4 border-blue-500">
+          <h2 className="text-lg font-medium text-gray-600">Total Requests</h2>
+          <p className="text-3xl font-bold text-blue-600 mt-2">{stats.total}</p>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead className="bg-gray-100">
+      <div className="overflow-x-auto shadow-lg rounded-xl">
+        <table className="min-w-full text-sm text-left bg-white border border-gray-200">
+          <thead className="bg-blue-50 text-blue-900">
             <tr>
-              <th className="border px-4 py-2">Order ID</th>
-              <th className="border px-4 py-2">Hospital Name</th>
-              <th className="border px-4 py-2">Type</th>
-              <th className="border px-4 py-2">Drugs</th>
-              <th className="border px-4 py-2">Quantity</th>
-              <th className="border px-4 py-2">Priority</th>
-              <th className="border px-4 py-2">Status</th>
-              <th className="border px-4 py-2">Request Date</th>
+              <th className="px-6 py-3 font-medium">Order ID</th>
+              <th className="px-6 py-3 font-medium">Hospital</th>
+              <th className="px-6 py-3 font-medium">Drug</th>
+              <th className="px-6 py-3 font-medium">Quantity</th>
+              <th className="px-6 py-3 font-medium">Priority</th>
+              <th className="px-6 py-3 font-medium">Status</th>
+              <th className="px-6 py-3 font-medium">Request Date</th>
             </tr>
           </thead>
-          <tbody>
-            {orders.map(order => (
-              <tr key={order._id} className="text-center">
-                <td className="border px-4 py-2">{order.orderId}</td>
-                <td className="border px-4 py-2">{order.hospitalName}</td>
-                <td className="border px-4 py-2">{order.type || "Regular Supply"}</td>
-                <td className="border px-4 py-2">{order.medicineName}</td>
-                <td className="border px-4 py-2">{order.quantity}</td>
-                <td className={`border px-4 py-2 ${getPriority(order.deliveryDate) === 'High' ? 'text-red-600 font-bold' : ''}`}>
-                  {getPriority(order.deliveryDate)}
+          <tbody className="divide-y">
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-6 text-gray-500">
+                  No hospital orders found.
                 </td>
-                <td className="border px-4 py-2">{order.manufacturerStatus || "Wait for confirmation"}</td>
-                <td className="border px-4 py-2">{order.deliveryDate?.slice(0, 10)}</td>
               </tr>
-            ))}
+            ) : (
+              orders.map((order) => (
+                <tr key={order._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3 font-medium text-gray-800">{order.orderId}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.hospitalName}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.medicineName}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.quantity}</td>
+                  <td className={`px-6 py-3 font-medium ${getPriority(order.deliveryDate) === 'High' ? 'text-red-600' : getPriority(order.deliveryDate) === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>{getPriority(order.deliveryDate)}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.manufacturerStatus || 'Pending'}</td>
+                  <td className="px-6 py-3 text-gray-600">{order.deliveryDate?.slice(0, 10)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

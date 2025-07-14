@@ -1,28 +1,37 @@
-// lib/models/Pod.ts
-
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IPod extends Document {
-  userId: Types.ObjectId; // uploader user
+  hospitalUserId: Types.ObjectId;
   orderId: string;
   hospitalName: string;
   vendorId: string;
   podUrl: string;
   uploadedAt: Date;
-
 }
 
 const podSchema = new Schema<IPod>(
   {
-    userId: {
+    hospitalUserId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: [true, 'Hospital userId is required'],
     },
-    orderId: String,
-    hospitalName: String,
-    vendorId: String,
-    podUrl: String,
+    orderId: {
+      type: String,
+      required: [true, 'Order ID is required'],
+    },
+    hospitalName: {
+      type: String,
+      required: [true, 'Hospital name is required'],
+    },
+    vendorId: {
+      type: String,
+      required: [true, 'Vendor ID is required'],
+    },
+    podUrl: {
+      type: String,
+      required: [true, 'POD URL is required'],
+    },
     uploadedAt: {
       type: Date,
       default: Date.now,

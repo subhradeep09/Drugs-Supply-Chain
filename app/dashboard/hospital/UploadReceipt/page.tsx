@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import html2canvas from 'html2canvas';
@@ -10,13 +11,15 @@ interface OrderType {
   orderId: string;
   hospitalName: string;
   manufacturerStatus: string;
+  vendorId: string;
 }
 
 export default function UploadPOD() {
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [uploading, setUploading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
-  const podRef = useRef(null);
+  const [uploadedOrders, setUploadedOrders] = useState<string[]>([]);
+  const podRef = useRef<HTMLDivElement>(null);
   const [remarks, setRemarks] = useState('');
   const [receiver, setReceiver] = useState('');
   const [manufacturer, setManufacturer] = useState('');
@@ -31,7 +34,19 @@ export default function UploadPOD() {
         console.error('Error fetching delivered orders:', error);
       }
     };
+
+    const fetchUploadedPODs = async () => {
+      try {
+        const res = await axios.get('/api/fetch_uploaded_pods');
+        const uploaded = res.data.map((pod: any) => pod.orderId);
+        setUploadedOrders(uploaded);
+      } catch (error) {
+        console.error('Error fetching uploaded PODs:', error);
+      }
+    };
+
     fetchDeliveredOrders();
+    fetchUploadedPODs();
   }, []);
 
   const handleUpload = async () => {
@@ -50,8 +65,6 @@ export default function UploadPOD() {
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
     const aspectRatio = canvas.width / canvas.height;
     const pdfWidth = pageWidth - 20;
     const pdfHeight = pdfWidth / aspectRatio;
@@ -69,19 +82,28 @@ export default function UploadPOD() {
     formData.append('file', pdfBlob, `${selectedOrder.orderId}_pod.pdf`);
     formData.append('orderId', selectedOrder.orderId);
     formData.append('hospitalId', selectedOrder.hospitalName);
-    formData.append('vendorId', 'VEND001');
+    formData.append('vendorId', selectedOrder.vendorId);
 
     try {
       setUploading(true);
       await axios.post('/api/upload_pod', formData);
       alert('✅ POD uploaded successfully!');
+      setUploadedOrders((prev) => [...prev, selectedOrder.orderId]);
       setSelectedOrder(null);
       setRemarks('');
       setReceiver('');
       setManufacturer('');
       receiverSigRef.current?.clear();
     } catch (err: any) {
-      alert('❌ Upload error: ' + err.message);
+      if (err?.response?.status === 409) {
+        alert('⚠️ POD already uploaded for this order.');
+        setUploadedOrders((prev) => [...prev, selectedOrder.orderId]);
+        setSelectedOrder(null);
+      } else if (err?.response?.data?.error) {
+        alert('❌ Error: ' + err.response.data.error);
+      } else {
+        alert('❌ Upload failed. Please try again.');
+      }
       console.error(err);
     } finally {
       setUploading(false);
@@ -112,12 +134,16 @@ export default function UploadPOD() {
                   <td className="p-3">{order.hospitalName}</td>
                   <td className="p-3 text-green-600 font-medium">{order.manufacturerStatus}</td>
                   <td className="p-3 text-center">
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="text-blue-600 hover:underline text-sm font-semibold"
-                    >
-                      Generate POD
-                    </button>
+                    {uploadedOrders.includes(order.orderId) ? (
+                      <span className="text-gray-500 text-sm italic">Already Uploaded</span>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-blue-600 hover:underline text-sm font-semibold"
+                      >
+                        Generate POD
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -128,10 +154,12 @@ export default function UploadPOD() {
         {selectedOrder && (
           <div className="mt-8 border-t pt-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Selected Order: <span className="text-blue-700">{selectedOrder.orderId}</span> ({selectedOrder.hospitalName})
+              Selected Order:{' '}
+              <span className="text-blue-700">{selectedOrder.orderId}</span> (
+              {selectedOrder.hospitalName})
             </h3>
 
-            <div ref={podRef} className="bg-white border p-6 shadow-sm">
+            <div ref={podRef} className="bg-white border p-8 shadow-sm w-[800px] mx-auto">
               <h2 className="text-xl font-bold text-center mb-4">Proof of Delivery (POD)</h2>
               <p><strong>Order ID:</strong> {selectedOrder.orderId}</p>
               <p><strong>Hospital Name:</strong> {selectedOrder.hospitalName}</p>

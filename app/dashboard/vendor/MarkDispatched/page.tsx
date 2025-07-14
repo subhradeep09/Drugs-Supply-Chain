@@ -14,6 +14,7 @@ interface Order {
   manufacturerStatus: string;
   orderDate: string;
   deliveryDate: string;
+  type: 'Hospital' | 'Pharmacy'; // ✅ Required to send to backend
 }
 
 export default function VendorRequestDeliveryPage() {
@@ -33,18 +34,18 @@ export default function VendorRequestDeliveryPage() {
     }
   };
 
-  const handleRequestDelivery = async (ordersId: string) => {
+  const handleRequestDelivery = async (ordersId: string, type: 'Hospital' | 'Pharmacy') => {
     try {
       const res = await fetch('/api/vendor-request-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ordersId }),
+        body: JSON.stringify({ ordersId, type }), // ✅ Sending both order ID and type
       });
 
       const data = await res.json();
       if (data.success) {
         alert('✅ Requested for delivery.');
-        fetchOrders();
+        fetchOrders(); // Refresh list
       } else {
         alert(data.error || '❌ Failed to request delivery');
       }
@@ -71,7 +72,7 @@ export default function VendorRequestDeliveryPage() {
             <thead className="bg-blue-50 text-blue-800 uppercase text-xs">
               <tr>
                 <th className="px-4 py-3">Order ID</th>
-                <th className="px-4 py-3">Hospital</th>
+                <th className="px-4 py-3">Hospital/Pharmacy</th>
                 <th className="px-4 py-3">Medicine</th>
                 <th className="px-4 py-3">Quantity</th>
                 <th className="px-4 py-3">Delivery Date</th>
@@ -86,7 +87,7 @@ export default function VendorRequestDeliveryPage() {
                   className="border-t even:bg-gray-50 hover:bg-gray-100"
                 >
                   <td className="px-4 py-3">{order.orderId}</td>
-                  <td className="px-4 py-3">{order.hospitalName}</td>
+                  <td className="px-4 py-3">{order.hospitalName || 'Pharmacy'}</td>
                   <td className="px-4 py-3">{order.medicineName}</td>
                   <td className="px-4 py-3">{order.quantity}</td>
                   <td className="px-4 py-3">{order.deliveryDate?.slice(0, 10)}</td>
@@ -103,7 +104,7 @@ export default function VendorRequestDeliveryPage() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => handleRequestDelivery(order._id)}
+                      onClick={() => handleRequestDelivery(order._id, order.type)}
                       className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-lg hover:bg-blue-700 transition"
                     >
                       Request

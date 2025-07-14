@@ -3,16 +3,30 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/app/ui/card";
+import {
+  Card,
+  CardContent,
+  CardTitle,
+  CardDescription,
+} from "@/app/ui/card";
 import { Input } from "@/app/ui/input";
 import { Button } from "@/app/ui/button";
 import { Label } from "@/app/ui/label";
-import { UploadCloud, LogOut, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  UploadCloud,
+  LogOut,
+  Loader2,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 
 export default function ApplyVerificationPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,22 +41,24 @@ export default function ApplyVerificationPage() {
     addressProofFile: null,
   });
 
+  const [uploadedFiles, setUploadedFiles] = useState({
+    idProofFile: null,
+    licenseCertificateFile: null,
+    addressProofFile: null,
+  });
+
   const [statusMsg, setStatusMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session) {
-      router.push("/sign-in");
-      return;
-    }
+    if (!session) return router.push("/sign-in");
 
-    const checkApplicationStatus = async () => {
+    const checkStatus = async () => {
       try {
         const res = await fetch("/api/verification/status");
         const data = await res.json();
-
         if (data.applicationStatus === "APPROVED") {
           const role = session.user.role?.toLowerCase() || "";
           router.push(`/dashboard/${role}`);
@@ -56,7 +72,7 @@ export default function ApplyVerificationPage() {
           }));
           setChecking(false);
         }
-      } catch (err) {
+      } catch {
         setFormData((prev) => ({
           ...prev,
           name: session.user?.name || "",
@@ -66,7 +82,7 @@ export default function ApplyVerificationPage() {
       }
     };
 
-    checkApplicationStatus();
+    checkStatus();
   }, [session, status, router]);
 
   const handleChange = (e) => {
@@ -78,302 +94,252 @@ export default function ApplyVerificationPage() {
     const { name, files } = e.target;
     if (files && files[0]) {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
+      setUploadedFiles((prev) => ({ ...prev, [name]: files[0] }));
     }
   };
+
+  const removeFile = (name) => {
+    setFormData((prev) => ({ ...prev, [name]: null }));
+    setUploadedFiles((prev) => ({ ...prev, [name]: null }));
+    document.getElementById(name).value = "";
+  };
+
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatusMsg("");
-
     try {
       const form = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value) form.append(key, value);
       });
-
       const res = await fetch("/api/verification/apply", {
         method: "POST",
         body: form,
       });
-
       const data = await res.json();
-      if (res.ok) {
-        router.push("/application-status");
-      } else {
-        setStatusMsg(`❌ ${data.message || "Submission failed"}`);
-      }
-    } catch (err) {
+      if (res.ok) router.push("/application-status");
+      else setStatusMsg(`❌ ${data.message || "Submission failed"}`);
+    } catch {
       setStatusMsg("❌ Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (status === "loading" || checking) {
+  const renderFileUpload = (name, label, required = true) => {
+    const file = uploadedFiles[name];
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-background p-6">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Checking your verification status...</p>
+      <div className="space-y-2">
+        <Label className="text-gray-700 dark:text-gray-300 font-medium">
+          {label} {required && <span className="text-red-500">*</span>}
+        </Label>
+        <label className={`flex flex-col items-center justify-center w-full min-h-32 border-2 ${file ? 'border-indigo-300 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-dashed border-gray-300 dark:border-zinc-600'} rounded-xl bg-white/50 dark:bg-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-all duration-200 group`}>
+          <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+            {file ? (
+              <div className="flex flex-col items-center">
+                <div className="flex items-center bg-white dark:bg-zinc-700 rounded-lg px-3 py-2 mb-2 w-full max-w-xs">
+                  <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">{file.name}</span>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(name); }} className="ml-2 text-gray-400 hover:text-red-500">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400">Click to change file</span>
+              </div>
+            ) : (
+              <>
+                <UploadCloud className="w-8 h-8 mb-3 text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">PDF, JPG, PNG (MAX. 5MB)</p>
+              </>
+            )}
+          </div>
+          <Input type="file" id={name} name={name} onChange={handleFileChange} required={required && !file} className="hidden" />
+        </label>
       </div>
     );
-  }
+  };
+
+  const renderStep = () => {
+    const leftPanel = (
+      <div className="bg-indigo-50 dark:bg-zinc-800 flex flex-col items-center justify-start p-6 relative space-y-4">
+        <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/49817e3a93478543d271ae99e3194b041fb18b02/logo.png" alt="PharmaChain Logo" className="w-52 h-52 object-contain mt-4" />
+        <img src="https://raw.githubusercontent.com/subhradeep09/Drugs-Supply-Chain/823dd0f268f3b6a3cdbe389d8a47602d9f6a5bb4/verificationpage.png" alt="Verification" className="w-11/10 max-h-96 object-contain -mt-6 scale-110" />
+        <h2 className="text-xl text-center font-semibold text-indigo-700 dark:text-indigo-300 mt-4">Begin Your Verification</h2>
+        <p className="text-sm text-center text-gray-600 dark:text-gray-400 max-w-xs">Fill out your personal details to get started.</p>
+      </div>
+    );
+
+    const rightPanel = (content, title) => (
+      <div className="p-6 sm:p-10 space-y-8 bg-gradient-to-br from-white via-indigo-50 to-purple-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h3>
+
+        
+
+        {content}
+      </div>
+    );
+
+    const commonInputStyle = "rounded-xl border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 px-4 py-3 text-gray-800 dark:text-gray-200";
+
+    const containerStyle = "flex flex-col md:flex-row min-h-[70vh] rounded-2xl overflow-hidden shadow-xl";
+
+
+    if (step === 1) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input name="name" value={formData.name} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input name="email" value={formData.email} readOnly className="px-4 py-3 rounded-xl bg-gray-100 dark:bg-zinc-700 cursor-not-allowed text-gray-600 dark:text-gray-400" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Designation</Label>
+                  <Input name="designation" value={formData.designation} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+            </div>,
+            "Personal Information"
+          )}
+        </div>
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Organization</Label>
+                  <Input name="organization" value={formData.organization} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>License Number</Label>
+                  <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>License Type</Label>
+                  <Input name="licenseType" value={formData.licenseType} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Issued By</Label>
+                  <Input name="licenseIssuedBy" value={formData.licenseIssuedBy} onChange={handleChange} required className={commonInputStyle} />
+                </div>
+              </div>
+            </div>,
+            "License Information"
+          )}
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div className={containerStyle}>
+          {leftPanel}
+          {rightPanel(
+            <div className="space-y-6">
+              {renderFileUpload("idProofFile", "ID Proof")}
+              {renderFileUpload("licenseCertificateFile", "License Certificate")}
+              {renderFileUpload("addressProofFile", "Address Proof (Optional)", false)}
+            </div>,
+            "Document Upload"
+          )}
+        </div>
+      );
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] dark:from-[#232526] dark:to-[#414345] p-6">
-      <Card className="w-full max-w-3xl shadow-2xl border-0 rounded-2xl overflow-hidden backdrop-blur-md bg-white/80 dark:bg-gray-900/80">
-        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-8 text-white flex justify-between items-center">
-          <div>
-            <CardTitle className="text-3xl font-extrabold tracking-tight">
-              Welcome, {session?.user?.name || "User"}!
-            </CardTitle>
-            <CardDescription className="text-lg mt-2">
-              Complete your profile to unlock all features.
-            </CardDescription>
-          </div>
-          <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10 gap-2"
-            onClick={() => signOut({ callbackUrl: "/sign-in" })}
-          >
-            <LogOut className="h-5 w-5" />
-            Sign Out
-          </Button>
-        </div>
-        <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-6">
-              <h3 className="font-semibold text-xl">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    readOnly
-                    className="bg-muted rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    placeholder="+91-XXXXXXXXXX"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="designation">Designation</Label>
-                  <Input
-                    id="designation"
-                    name="designation"
-                    placeholder="Doctor / Vendor / Pharmacist"
-                    value={formData.designation}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-              </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-white dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 p-4">
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <img
+          src="https://www.transparenttextures.com/patterns/cubes.png"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <Card className="relative w-full max-w-3xl shadow-lg z-10">
+  {/* ✅ Progress bar moved here */}
+  <div className="w-full bg-gray-200 h-2.5 dark:bg-zinc-700 rounded-t-xl overflow-hidden">
+    <div
+      className="bg-indigo-600 h-2.5 transition-all duration-300"
+      style={{ width: `${(step / 3) * 100}%` }}
+    ></div>
+  </div>
+
+  <CardContent>
+    <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-white mb-4" />
+    {checking ? (
+
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
             </div>
-
-            <div className="space-y-6">
-              <h3 className="font-semibold text-xl">Professional Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="organization">Organization</Label>
-                  <Input
-                    id="organization"
-                    name="organization"
-                    placeholder="Hospital / Pharmacy / Vendor Company"
-                    value={formData.organization}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">License Number</Label>
-                  <Input
-                    id="licenseNumber"
-                    name="licenseNumber"
-                    placeholder="Enter your license number"
-                    value={formData.licenseNumber}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="licenseType">License Type</Label>
-                  <Input
-                    id="licenseType"
-                    name="licenseType"
-                    placeholder="Drug / GST / Medical Council"
-                    value={formData.licenseType}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="licenseIssuedBy">Issued By</Label>
-                  <Input
-                    id="licenseIssuedBy"
-                    name="licenseIssuedBy"
-                    placeholder="Authority Name"
-                    value={formData.licenseIssuedBy}
-                    onChange={handleChange}
-                    required
-                    className="bg-background rounded-lg shadow-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="font-semibold text-xl">Document Upload</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="idProofFile">Government ID Proof</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="w-full">
-                      <div className="flex flex-col items-center justify-center gap-2 px-6 py-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
-                        <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground text-center">
-                          {formData.idProofFile
-                            ? formData.idProofFile.name
-                            : "Upload PDF or Image (Max 5MB)"}
-                        </p>
-                      </div>
-                      <Input
-                        id="idProofFile"
-                        name="idProofFile"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileChange}
-                        required
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="licenseCertificateFile">License Certificate</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="w-full">
-                      <div className="flex flex-col items-center justify-center gap-2 px-6 py-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
-                        <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground text-center">
-                          {formData.licenseCertificateFile
-                            ? formData.licenseCertificateFile.name
-                            : "Upload PDF or Image (Max 5MB)"}
-                        </p>
-                      </div>
-                      <Input
-                        id="licenseCertificateFile"
-                        name="licenseCertificateFile"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileChange}
-                        required
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="addressProofFile">Address Proof (Optional)</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="w-full">
-                      <div className="flex flex-col items-center justify-center gap-2 px-6 py-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
-                        <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground text-center">
-                          {formData.addressProofFile
-                            ? formData.addressProofFile.name
-                            : "Upload PDF or Image (Max 5MB)"}
-                        </p>
-                      </div>
-                      <Input
-                        id="addressProofFile"
-                        name="addressProofFile"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {statusMsg && (
-              <div
-                className={`p-4 rounded-lg ${
-                  statusMsg.includes("❌")
-                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300"
-                    : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {statusMsg.includes("❌") ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    <CheckCircle2 className="h-5 w-5" />
-                  )}
-                  <p>{statusMsg.replace("❌", "").trim()}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full py-6 text-lg font-semibold bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-pink-500 hover:to-indigo-500 transition-all shadow-lg"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Submit Verification Request"
+          ) : (
+            <>
+              {renderStep()}
+              <div className="flex flex-col md:flex-row justify-between items-center mt-6">
+  <div className="w-full md:w-auto mt-4 md:mt-0">
+    <Button
+      variant="ghost"
+      onClick={() => signOut()}
+      className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+    >
+      <LogOut className="w-4 h-4" />
+      Sign Out
+    </Button>
+  </div>
+                {step > 1 && (
+                  <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </Button>
                 )}
-              </Button>
-            </div>
-          </form>
+                {step < 3 ? (
+                  <Button onClick={nextStep} className="flex items-center gap-2">
+                    Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2">
+                    {loading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4" /> Submitting...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
+                  </Button>
+                )}
+              </div>
+              {statusMsg && (
+                <p className={`mt-4 text-sm ${statusMsg.startsWith("❌") ? "text-red-500" : "text-green-500"}`}>
+                  {statusMsg}
+                </p>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

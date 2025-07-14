@@ -1,48 +1,93 @@
-import dbConnect from '@/lib/db/mongodborder';
-import PharmacyOrder from '@/lib/models/orderp';
+
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import dbConnect from '@/lib/db/mongodborder';
+import PharmacyOrder from '@/lib/models/orderp';
+import VendorInventory from '@/lib/models/Vendor-Inventory';
+import Medicine from '@/lib/models/medicine';
+import { User } from '@/lib/models/User';
+import { v4 as uuidv4 } from 'uuid';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
+  await dbConnect();
+
   try {
-    await dbConnect();
-
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = session.user._id || session.user.id;
-    const orders = await PharmacyOrder.find({ userId });
-
-    return NextResponse.json(orders);
+    const orders = await PharmacyOrder.find({}).sort({ createdAt: -1 });
+    return NextResponse.json(orders, { status: 200 });
   } catch (error) {
-    console.error('Error fetching pharmacy orders:', error);
-    return NextResponse.json({ message: 'Error fetching orders' }, { status: 500 });
+    console.error('[DEBUG_ORDER_FETCH_ERROR]', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    await dbConnect();
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { medicineId, vendorId, hospitalName, deliveryDate, quantity } = await req.json();
+    const today = new Date();
+
+    // Fetch user details from DB to get organization
+    const hospitalUser = await User.findById(user._id).select('organization');
+    if (!hospitalUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const data = await req.json();
-    const userId = session.user._id || session.user.id;
 
-    const order = await PharmacyOrder.create({
-      ...data,
-      userId,
+    // Get the minimum offer price for that medicine from this vendor
+    const bestBatch = await VendorInventory.findOne({
+      medicineId,
+      userId: vendorId,
+      expiryDate: { $gte: today },
+      stockQuantity: { $gt: 0 },
+    }).sort({ expiryDate: 1 }); // FIFO batch used only for price reference
+
+    if (!bestBatch) {
+      return NextResponse.json({ error: 'No valid batch available' }, { status: 400 });
+    }
+
+    const medicineDoc = await Medicine.findById(medicineId);
+    if (!medicineDoc) {
+      return NextResponse.json({ error: 'Medicine not found' }, { status: 404 });
+    }
+
+    const avgPrice = bestBatch.offerPrice;
+    const totalValue = avgPrice * quantity;
+
+    const newPharmacyOrder = await PharmacyOrder.create({
+      userId: user._id,
+      orderId: uuidv4(),
+      medicineId,
+      medicineName: medicineDoc.brandName,
+      quantity,
+      price: avgPrice,
+      hospitalName: hospitalUser.organization,
+      totalValue,
+      deliveryDate: new Date(deliveryDate),
+      orderDate: new Date(),
+      manufacturerStatus: 'Pending',
+      dispatchedBatches: [], // initially empty, will be filled after vendor accepts
     });
 
-    return NextResponse.json(order, { status: 201 });
-  } catch (error: any) {
-    console.error('Error creating pharmacy order:', error.message);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, PharmacyOrder: newPharmacyOrder }, { status: 201 });
+
+  } catch (error) {
+    console.error('[ORDER_CREATE_ERROR]', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
