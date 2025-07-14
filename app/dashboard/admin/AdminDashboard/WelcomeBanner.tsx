@@ -11,6 +11,7 @@ import {
   FiUser
 } from 'react-icons/fi';
 
+
 export const WelcomeBanner: React.FC = () => {
   const [alertCount, setAlertCount] = useState(0);
 
@@ -22,6 +23,7 @@ export const WelcomeBanner: React.FC = () => {
     day: 'numeric',
   });
 
+
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
@@ -29,7 +31,9 @@ export const WelcomeBanner: React.FC = () => {
         const data = await res.json();
 
         if (data.success) {
+
           setAlertCount(data.alerts?.length || 0);
+
         }
       } catch (err) {
         console.error("Failed to fetch alerts:", err);
@@ -92,3 +96,4 @@ export const WelcomeBanner: React.FC = () => {
     </div>
   );
 };
+
