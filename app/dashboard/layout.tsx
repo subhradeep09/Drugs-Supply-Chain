@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { useEffect, useState } from 'react'
 import Sidebar from '@/app/ui/Sidebar'
+import DashboardNavbar from '@/app/ui/DashboardNavbar'
 
 export default function DashboardLayout({
   children,
@@ -23,7 +24,7 @@ export default function DashboardLayout({
     const verifyAccess = async () => {
       if (status === 'loading') return
 
-      if (!session || status === 'unauthenticated') {
+      if (!session || status === "unauthenticated") {
         router.push('/sign-in')
         return
       }
@@ -66,11 +67,14 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        {children}
-      </main>
+    <div className="flex flex-col h-screen">
+      <DashboardNavbar />
+      <div className="flex flex-1 pt-16"> {/* Add pt-16 for navbar height */}
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto p-8"> {/* You may want to adjust p-8 if too much */}
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
