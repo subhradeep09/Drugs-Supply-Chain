@@ -236,14 +236,8 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <main className="pt-0 px-4 pb-8">
-      <div className="flex justify-center mb-0">
-        <img 
-          src="/logo.png" 
-          alt="Admin Dashboard Logo" 
-          className="h-21 w-21 object-contain"
-        />
-      </div>
+    <main className="pt-0 px-20 pb-8">
+      
 
       <WelcomeBanner />
       <QuickStatsCards />
