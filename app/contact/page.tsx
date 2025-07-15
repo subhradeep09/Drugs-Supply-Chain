@@ -1,11 +1,12 @@
 import React from 'react';
 import { Navbar } from '@/app/ui/Navbar';
+import Footer from '@/app/ui/Footer'
 
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <main className="flex flex-col items-center justify-center py-24 px-4">
+      <main className="flex flex-col items-center justify-center min-h-screen py-24 px-4">
         <div className="max-w-xl w-full mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center text-primary">Contact Us</h1>
           <p className="text-lg text-muted-foreground mb-8 text-center">
@@ -43,6 +44,7 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 } 

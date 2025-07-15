@@ -1,6 +1,7 @@
 import { Features } from '@/app/sections/Features';
 import React from 'react';
 import { Navbar } from '@/app/ui/Navbar';
+import Footer from '@/app/ui/Footer'
 
 export default function FeaturesPage() {
   return (
@@ -70,6 +71,7 @@ export default function FeaturesPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 } 

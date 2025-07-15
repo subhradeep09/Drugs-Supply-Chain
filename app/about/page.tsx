@@ -14,6 +14,7 @@ import {
   TestTube2,
   Cloud
 } from 'lucide-react';
+import Footer from '@/app/ui/Footer'
 
 // Simple SVG vector illustrations for sections
 const HeroVector = () => (
@@ -138,6 +139,7 @@ export default function AboutPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
