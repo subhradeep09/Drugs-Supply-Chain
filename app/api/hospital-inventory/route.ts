@@ -39,8 +39,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    console.log('[HOSPITAL_INVENTORY_FETCHED]', filteredInventory);
-
+    
     return NextResponse.json(filteredInventory, { status: 200 });
   } catch (error) {
     console.error('[HOSPITAL_INVENTORY_FETCH_ERROR]', error);
