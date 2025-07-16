@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if(path === "/profile" || "/settings"){
+  if(path === "/profile"){
     if(!token){
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
@@ -115,6 +115,5 @@ export const config = {
     "/verify-otp/:path*",
     "/sign-in",
     "/profile",
-    "/settings"
   ],
 };
