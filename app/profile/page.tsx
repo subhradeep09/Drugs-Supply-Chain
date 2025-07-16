@@ -59,7 +59,7 @@ export default function ProfilePage() {
   )
 
   const { user, verification } = data
-  const isVerified = verification?.applicationStatus === 'approved'
+  const isVerified = verification?.applicationStatus === 'APPROVED'
 
   return (
     <div className="max-w-4xl mx-auto p-6">

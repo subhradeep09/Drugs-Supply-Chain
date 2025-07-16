@@ -37,6 +37,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if(path === "/profile" || "/settings"){
+    if(!token){
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+  }
+
   // 2️⃣ /apply-verification: only for users who haven't applied
   if (path === "/apply-verification") {
     if (!token) {
@@ -108,5 +114,7 @@ export const config = {
     // "/application-status/:path*",
     "/verify-otp/:path*",
     "/sign-in",
+    "/profile",
+    "/settings"
   ],
 };
