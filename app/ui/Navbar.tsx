@@ -88,17 +88,15 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled ? 'glass shadow-soft' : 'bg-background'
+      className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 bg-white dark:bg-gray-900 border-b border-gray-200 ${
+        isScrolled ? 'shadow-md' : ''
       }`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2 hover-lift">
-              <span className="text-xl font-bold gradient-text">
-                DrugChain
-              </span>
+              <img src="/logo.png" alt="Logo" className="h-21 w-21 object-contain" />
             </Link>
             <div className="hidden md:ml-8 md:flex md:space-x-6">
               {filteredNavigation.map((item) => (

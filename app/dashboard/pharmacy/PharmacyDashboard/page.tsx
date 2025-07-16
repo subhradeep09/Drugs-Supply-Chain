@@ -227,8 +227,9 @@ const paginatedOrders = recentOrders.slice(
 
 
   return (
+
     <div className="min-h-screen bg-gray-50 font-sans">
-      {/* Modern Header */}
+
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-6">

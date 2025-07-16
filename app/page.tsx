@@ -1,6 +1,7 @@
 import { Navbar } from '@/app/ui/Navbar'
 import { Hero } from '@/app/sections/Hero'
 import { Features } from '@/app/sections/Features'
+import Footer from '@/app/ui/Footer'
 
 export default function HomePage() {
   return (
@@ -10,6 +11,7 @@ export default function HomePage() {
         <Hero />
         <Features />
       </main>
+      <Footer />
     </div>
   )
 } 
