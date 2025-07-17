@@ -235,6 +235,7 @@ const paginatedOrders = recentOrders.slice(
       <main className="max-w-7xl mx-auto px-6 py-6">
         {/* Dashboard Header */}
         <div className="mb-8">
+          
           <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
           <p className="text-gray-500">Monitor your pharmacy operations at a glance</p>
         </div>
@@ -242,7 +243,7 @@ const paginatedOrders = recentOrders.slice(
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           {[
-            { title: "Total Medicines", value: totalMedicines, change: "+12%", trend: "up", icon: "💊", bg: "bg-blue-50", text: "text-blue-600" },
+            { title: " Types of  Medicines", value: totalMedicines, change: "+12%", trend: "up", icon: "💊", bg: "bg-blue-50", text: "text-blue-600" },
             { title: "Critical Alerts", value: criticalCount, change: "+5%", trend: "up", icon: "⚠️", bg: "bg-red-50", text: "text-red-600" },
             { title: "Low Stock Items", value: lowStockCount, change: "+3%", trend: "up", icon: "📉" ,bg:"bg-orange-50", text: "text-orange-600"},
             { title: "Inventory Value", value: `₹${inventoryValue.toFixed(2)}`, change: "+8%", trend: "up", icon: "💰", bg: "bg-green-50", text: "text-green-600" },
@@ -554,3 +555,6 @@ const paginatedOrders = recentOrders.slice(
   
   );
 }
+
+
+
