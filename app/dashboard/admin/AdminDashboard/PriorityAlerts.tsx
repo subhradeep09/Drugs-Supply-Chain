@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
+import {
   faBell,
   faCapsules,
   faAmbulance,
   faTruck,
   faExclamationCircle,
-  faChevronRight
+  faChevronRight,
+  faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 
 interface Alert {
@@ -20,6 +21,7 @@ interface Alert {
 
 export const PriorityAlerts: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -74,6 +76,8 @@ export const PriorityAlerts: React.FC = () => {
     }
   };
 
+  const visibleAlerts = showAll ? alerts : alerts.slice(0, 3);
+
   return (
     <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-8">
       <div className="flex items-center justify-between">
@@ -90,15 +94,24 @@ export const PriorityAlerts: React.FC = () => {
             </p>
           </div>
         </div>
-        <button className="bg-white text-orange-600 border border-orange-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-100 transition duration-200 cursor-pointer !rounded-button whitespace-nowrap flex items-center">
-          View All Alerts
-          <FontAwesomeIcon icon={faChevronRight} className="ml-1 text-xs" />
-        </button>
+
+        {alerts.length > 1 && (
+          <button
+            onClick={() => setShowAll(prev => !prev)}
+            className="bg-white text-orange-600 border border-orange-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-100 transition duration-200 cursor-pointer !rounded-button whitespace-nowrap flex items-center"
+          >
+            {showAll ? "Close" : "View All Alerts"}
+            <FontAwesomeIcon
+              icon={showAll ? faChevronUp : faChevronRight}
+              className="ml-1 text-xs"
+            />
+          </button>
+        )}
       </div>
 
-      {alerts.length > 0 && (
+      {visibleAlerts.length > 0 && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {alerts.map((alert, index) => (
+          {visibleAlerts.map((alert, index) => (
             <div
               key={index}
               className="bg-white rounded-lg p-3 border border-orange-200 flex items-center"

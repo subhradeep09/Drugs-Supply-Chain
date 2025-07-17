@@ -5,6 +5,8 @@ import { Button } from "@/app/ui/button";
 import Link from "next/link";
 import { Check, X, ChevronRight, FileText, FileBadge, Home, User, Clock, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {  FiCheckCircle} from 'react-icons/fi';
+
 
 interface Verification {
   _id: string;
@@ -90,6 +92,61 @@ export default function UserVerificationRequests() {
     }
   };
 
+  const handleExportCSV = () => {
+  if (!requests || requests.length === 0) return;
+
+  const headers = [
+    "Full Name",
+    "Email",
+    "Phone Number",
+    "Organization",
+    "Designation",
+    "License Number",
+    "License Type",
+    "Issued By",
+    "Application Status",
+    "Submitted At",
+  ];
+
+  const rows = requests.map((u) => {
+    const v = u.verification;
+    return [
+      v?.fullName || "",
+      u.email || "",
+      v?.phoneNumber || "",
+      u.organization || "",
+      v?.designation || "",
+      v?.licenseNumber || "",
+      v?.licenseType || "",
+      v?.licenseIssuedBy || "",
+      v?.applicationStatus || "",
+      new Date(v?.submittedAt || "").toLocaleString(),
+    ];
+  });
+
+  const csvContent =
+    [headers, ...rows]
+      .map((e) =>
+        e
+          .map((field) =>
+            `"${String(field).replace(/"/g, '""')}"`
+          ) // escape quotes
+          .join(",")
+      )
+      .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "verification_requests.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+
   const handleCheckboxChange = (vid: string, field: "idProof" | "license" | "address", checked: boolean) => {
     setVerifiedDocs((prev) => {
       const updated = {
@@ -118,20 +175,30 @@ export default function UserVerificationRequests() {
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Verification Requests</h1>
-            <p className="text-gray-600 mt-1">
-              {requests.length} pending {requests.length === 1 ? "request" : "requests"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <span>Export</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        <div className="bg-gradient-to-r from-red-600 to-blue-700 rounded-xl shadow-lg p-6 mb-8">
+  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center">
+        <FiCheckCircle className="mr-3 text-white-200" />
+        Verification Requests
+      </h1>
+      <p className="text-indigo-100 mt-1">
+        {requests.length} pending {requests.length === 1 ? "request" : "requests"}
+      </p>
+    </div>
+    
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        onClick={handleExportCSV}
+        className="flex items-center gap-2 bg-white bg-opacity-100 hover:bg-opacity-100 text-white-700 hover:text-indigo-800 border-indigo-300 hover:border-indigo-400"
+      >
+        <span>Export</span>
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+    </div>
+  </div>
+</div>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
