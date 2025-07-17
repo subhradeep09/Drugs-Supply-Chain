@@ -24,7 +24,7 @@ export default function DashboardLayout({
     const verifyAccess = async () => {
       if (status === 'loading') return
 
-      if (!session || status === "unauthenticated") {
+      if (!session || status === 'unauthenticated') {
         router.push('/sign-in')
         return
       }
@@ -69,9 +69,14 @@ export default function DashboardLayout({
   return (
     <div className="flex flex-col h-screen">
       <DashboardNavbar />
-      <div className="flex flex-1 pt-16"> {/* Add pt-16 for navbar height */}
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto p-8"> {/* You may want to adjust p-8 if too much */}
+      <div className="flex flex-1 pt-16">
+        {/* Sidebar with fixed width */}
+        <div className="w-64 shrink-0">
+          <Sidebar />
+        </div>
+
+        {/* Main content fills the rest */}
+        <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
           {children}
         </main>
       </div>
