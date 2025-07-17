@@ -53,11 +53,11 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
     { title: 'Track Orders', href: '/dashboard/pharmacy/TrackOrders', icon: FileSearch },
     { title: 'Confirm Delivery', href: '/dashboard/pharmacy/ConfirmDelivery', icon: FileCheck },
     { title: 'Inventory', href: '/dashboard/pharmacy/ViewInventory', icon: Package },
-    { title: 'Upload POD', href: '/dashboard/pharmacy/InternalTransfers', icon: ArrowLeftRight },
-    { title: 'Drug Returns', href: '/dashboard/pharmacy/DrugReturns', icon: RotateCcw },
-    { title: 'Drugs Sold', href: '/dashboard/pharmacy/DrugsSold', icon: RotateCcw },
+    { title: 'Upload POD', href: '/dashboard/pharmacy/InternalTransfers', icon: Upload},
+   
+    { title: 'Drugs Sold', href: '/dashboard/pharmacy/DrugsSold', icon: ArrowLeftRight },
     { title: 'Consumption Chart', href: '/dashboard/pharmacy/ConsumptionChart', icon: LineChart },
-    { title: 'Feedback & Alerts', href: '/dashboard/pharmacy/FeedbackAlerts', icon: AlertCircle },
+    { title: 'Expiry Alerts', href: '/dashboard/pharmacy/FeedbackAlerts', icon: AlertCircle },
     { title: 'Settings', href: '/dashboard/pharmacy/Settings', icon: Settings },
   ],
   VENDOR: [
