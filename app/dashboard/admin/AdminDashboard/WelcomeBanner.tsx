@@ -83,16 +83,6 @@ export const WelcomeBanner: React.FC = () => {
         </div>
       </div>
 
-      {/* Sign Out Button - bottom right */}
-      <div className="absolute bottom-4 right-4">
-        <button
-          onClick={() => signOut({ callbackUrl: '/sign-in' })}
-          className="flex items-center bg-red-600 text-white px-5 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-200"
-        >
-          <FiLogOut className="mr-2" />
-          Sign Out
-        </button>
-      </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {  FaPills } from 'react-icons/fa';
 import {
   Table,
   TableBody,
@@ -122,15 +123,27 @@ export default function VendorInventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Drug Inventory</h1>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleExportCSV}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-        </div>
-      </div>
+      <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-xl shadow-lg p-6 mb-8">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center">
+      <FaPills className="mr-3 text-blue-200 text-2xl" />
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+        Drug Inventory
+      </h1>
+    </div>
+    
+    <div className="flex items-center space-x-2">
+      <Button 
+        variant="outline" 
+        onClick={handleExportCSV}
+        className="bg-white bg-opacity-90 hover:bg-opacity-100 text-white-700 hover:text-blue-800 border-blue-300 hover:border-blue-400 flex items-center"
+      >
+        <Download className="mr-2 h-4 w-4" />
+        Export
+      </Button>
+    </div>
+  </div>
+</div>
 
       <Card className="border-none shadow-sm">
         <CardHeader className="px-6 pt-6 pb-4">

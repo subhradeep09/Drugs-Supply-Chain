@@ -236,7 +236,7 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <main className="pt-0 px-20 pb-8">
+    <main className="pt-0 px-10 pb-8">
       
 
       <WelcomeBanner />

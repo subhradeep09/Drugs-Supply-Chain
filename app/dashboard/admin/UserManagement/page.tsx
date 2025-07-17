@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {  FiUsers} from 'react-icons/fi';
 import {
   Card,
   CardContent,
@@ -80,6 +81,35 @@ export default function UserManagementPage() {
      user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  const handleRejectClick = async (userId: string) => {
+  const confirmed = confirm('Are you sure you want to reject this user application?')
+  if (!confirmed) return
+
+  try {
+    const res = await fetch('/api/reject-verification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    })
+
+    const result = await res.json()
+
+    if (res.ok) {
+      alert('User application rejected successfully.')
+
+      // Optionally, remove from UI or refetch
+      setUsers(prev => prev.filter(u => u._id !== userId))
+    } else {
+      alert('Failed to reject user: ' + result.message)
+    }
+  } catch (err) {
+    console.error('Error rejecting user:', err)
+    alert('An error occurred while rejecting the user.')
+  }
+}
+
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
@@ -88,12 +118,17 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage system users and their permissions
-        </p>
-      </div>
+      <div className="bg-gradient-to-r from-red-600 to-blue-700 rounded-xl shadow-lg p-6 mb-8">
+  <div className="space-y-2">
+    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center">
+      <FiUsers className="mr-3 text-slate-300" />
+      User Management
+    </h1>
+    <p className="text-slate-300">
+      Manage system users and their permissions
+    </p>
+  </div>
+</div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-md transition-shadow">
@@ -101,7 +136,7 @@ export default function UserManagementPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Users
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? '--' : users.length}</div>
@@ -114,7 +149,7 @@ export default function UserManagementPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Active Users
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-red-700" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -131,7 +166,7 @@ export default function UserManagementPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               New This Month
             </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CalendarDays className="h-4 w-4 text-blue-800" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? '--' : newThisMonth}</div>
@@ -144,7 +179,7 @@ export default function UserManagementPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Verified Emails
             </CardTitle>
-            <MailCheck className="h-4 w-4 text-muted-foreground" />
+            <MailCheck className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -266,12 +301,16 @@ export default function UserManagementPage() {
                           minute: '2-digit',
                         })}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" className="gap-1">
-                          <Power className="h-3 w-3" />
-                          {user.status === 'active' ? 'Deactivate' : 'Activate'}
-                        </Button>
-                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+  <Button
+    variant="destructive"
+    size="sm"
+    onClick={() => handleRejectClick(user._id)}
+  >
+    Invalidate
+  </Button>
+</TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>

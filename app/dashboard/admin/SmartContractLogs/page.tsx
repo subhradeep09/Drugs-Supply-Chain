@@ -6,6 +6,7 @@ import {
   ExternalLinkIcon, HospitalIcon, PackageIcon, PillIcon, ClockIcon,
   FactoryIcon, TagIcon, HashIcon, Loader2Icon, SearchIcon
 } from 'lucide-react'
+import { FiFileText ,FiPackage,FiSearch } from 'react-icons/fi';
 
 declare global {
   interface Window {
@@ -102,26 +103,39 @@ export default function SmartContractLogs() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Delivered Orders</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Blockchain transaction logs</p>
+      <div className="bg-gradient-to-r from-red-600 to-blue-600 rounded-xl shadow-lg p-6 mb-8 dark:from-gray-800 dark:to-gray-900">
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-100 flex items-center">
+        <FiPackage className="mr-3 text-blue dark:text-blue-300" />
+        Delivered Orders
+      </h1>
+      <p className="text-blue-100 dark:text-gray-300 mt-1">Blockchain transaction logs</p>
+    </div>
+    
+    <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="relative w-full sm:w-80">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <FiSearch className="text-blue-800 dark:text-blue-400" />
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search by Order ID, Medicine, Hospital..."
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm w-80 focus:outline-none focus:ring focus:ring-blue-300"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-lg">
-            <p className="text-sm font-medium">
-              Contract: {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}
-            </p>
-          </div>
-        </div>
+        <input
+          type="text"
+          placeholder="Search by Order ID, Medicine, Hospital..."
+          className="block w-full pl-10 pr-4 py-2 rounded-lg border border-blue-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent dark:focus:ring-blue-500"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
+      
+      <div className="bg-blue-100 dark:bg-blue-900/80 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+        <p className="text-sm font-medium flex items-center">
+          <FiFileText className="mr-2" />
+          Contract: {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12">
