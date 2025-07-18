@@ -178,7 +178,7 @@ For support, email: support@yourdomain.com
 
 ## 🙏 Acknowledgments
 
-- Government of Delhi
+- Government
 - Open Source Community
 - Blockchain Technology Community
 
