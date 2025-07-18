@@ -32,6 +32,11 @@ const ManufacturerDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploadMessage, setUploadMessage] = useState('');
 
+  // New state for order stats chart
+  const [orderStats, setOrderStats] = useState<{ x: string[]; y: number[]; period: string }>({ x: [], y: [], period: 'monthly' });
+  const [orderStatsLoading, setOrderStatsLoading] = useState(false);
+  const [orderStatsPeriod, setOrderStatsPeriod] = useState<'monthly' | 'yearly'>('monthly');
+
   // Initialize charts
   useEffect(() => {
     if (activeTab === 'dashboard') {
@@ -70,39 +75,6 @@ const ManufacturerDashboardPage: React.FC = () => {
         }]
       };
       deliveryTimesChart.setOption(deliveryTimesOption);
-
-      // SLA Compliance Chart
-      const slaComplianceChart = echarts.init(document.getElementById('sla-compliance-chart'));
-      const slaComplianceOption = {
-        animation: false,
-        title: {
-          text: 'SLA Compliance Rate',
-          left: 'center',
-          textStyle: {
-            fontSize: 14
-          }
-        },
-        tooltip: {
-          trigger: 'axis'
-        },
-        xAxis: {
-          type: 'category',
-          data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-        },
-        yAxis: {
-          type: 'value',
-          name: 'Percentage',
-          max: 100
-        },
-        series: [{
-          data: [98, 97, 95, 98, 99, 97],
-          type: 'bar',
-          itemStyle: {
-            color: '#4caf50'
-          }
-        }]
-      };
-      slaComplianceChart.setOption(slaComplianceOption);
 
       // Order Status Distribution Chart
       const orderStatusChart = echarts.init(document.getElementById('order-status-chart'));
@@ -146,7 +118,6 @@ const ManufacturerDashboardPage: React.FC = () => {
       // Handle resize
       const handleResize = () => {
         deliveryTimesChart.resize();
-        slaComplianceChart.resize();
         orderStatusChart.resize();
       };
 
@@ -154,7 +125,6 @@ const ManufacturerDashboardPage: React.FC = () => {
       return () => {
         window.removeEventListener('resize', handleResize);
         deliveryTimesChart.dispose();
-        slaComplianceChart.dispose();
         orderStatusChart.dispose();
       };
     }
@@ -199,6 +169,65 @@ const ManufacturerDashboardPage: React.FC = () => {
     };
     fetchOrders();
   }, []);
+
+  // Fetch order stats
+  useEffect(() => {
+    setOrderStatsLoading(true);
+    fetch(`/api/vendor-order-stats?period=${orderStatsPeriod}`)
+      .then(res => res.json())
+      .then(data => {
+        setOrderStats(data);
+        setOrderStatsLoading(false);
+      })
+      .catch(() => setOrderStatsLoading(false));
+  }, [orderStatsPeriod]);
+
+  // Render the new chart
+  useEffect(() => {
+    const chartDom = document.getElementById('order-stats-chart');
+    if (!chartDom) return;
+    const chart = echarts.init(chartDom);
+    // @ts-ignore
+    chart.setOption({
+      animation: false,
+      title: {
+        text: orderStats.period === 'yearly' ? 'Orders per Year' : 'Orders per Month',
+        left: 'center',
+        textStyle: { fontSize: 14 }
+      },
+      tooltip: { trigger: 'axis' },
+      xAxis: {
+        type: 'category',
+        data: orderStats.x,
+        name: orderStats.period === 'yearly' ? 'Year' : 'Month',
+      },
+      yAxis: {
+        type: 'value',
+        name: 'Orders',
+        minInterval: 1,
+        min: 0,
+        axisLabel: {
+          formatter: (value: number) => Math.floor(value),
+        },
+      },
+      series: [{
+        data: orderStats.y,
+        type: 'bar',
+        itemStyle: { color: '#2196f3' },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: (params: any) => `${params.value}`,
+        },
+      }],
+    });
+    const resizeHandler = () => chart.resize();
+    window.addEventListener('resize', resizeHandler);
+    return () => {
+      window.removeEventListener('resize', resizeHandler);
+      chart.dispose();
+    };
+  }, [orderStats]);
 
   // Calculate time remaining for next dispatch
   const calculateTimeRemaining = () => {
@@ -525,14 +554,34 @@ const ManufacturerDashboardPage: React.FC = () => {
                   <div id="delivery-times-chart" className="h-64"></div>
                 </div>
               </div>
+              {/* REPLACE SLA Compliance chart with new Order Stats chart */}
               <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="font-medium text-gray-800">SLA Compliance</h3>
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                  <h3 className="font-medium text-gray-800">Order Statistics</h3>
+                  <div className="flex gap-2">
+                    <button
+                      className={`px-2 py-1 rounded text-xs font-medium border ${orderStatsPeriod === 'monthly' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border-blue-600'}`}
+                      onClick={() => setOrderStatsPeriod('monthly')}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      className={`px-2 py-1 rounded text-xs font-medium border ${orderStatsPeriod === 'yearly' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border-blue-600'}`}
+                      onClick={() => setOrderStatsPeriod('yearly')}
+                    >
+                      Yearly
+                    </button>
+                  </div>
                 </div>
                 <div className="p-4">
-                  <div id="sla-compliance-chart" className="h-64"></div>
+                  {orderStatsLoading ? (
+                    <div className="h-64 flex items-center justify-center text-gray-400">Loading...</div>
+                  ) : (
+                    <div id="order-stats-chart" className="h-64"></div>
+                  )}
                 </div>
               </div>
+              {/* Keep Order Status chart as is */}
               <div className="bg-white rounded-lg shadow">
                 <div className="p-4 border-b border-gray-200">
                   <h3 className="font-medium text-gray-800">Order Status</h3>
