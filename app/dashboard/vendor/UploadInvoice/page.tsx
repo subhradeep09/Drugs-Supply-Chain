@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/app/ui/InvoicePDF';
+import Link from 'next/link';
 
 type OrderType = 'hospital' | 'pharmacy';
 
@@ -198,12 +199,12 @@ export default function VendorInvoicesPage() {
                         Download PDF
                       </PDFDownloadLink>
                     ) : (
-                      <button
-                        onClick={() => handleGenerateInvoice(o.orderId, o.type)}
+                      <Link
+                        href={`/dashboard/vendor/UploadInvoice/${o.orderId}?type=${o.type}`}
                         className="inline-block px-4 py-1 text-white bg-blue-600 hover:bg-blue-700 rounded shadow transition"
                       >
                         Generate Invoice
-                      </button>
+                      </Link>
                     )}
                   </td>
                 </tr>
