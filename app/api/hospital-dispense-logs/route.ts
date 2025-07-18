@@ -18,12 +18,28 @@ export async function GET(req: NextRequest) {
   try {
     const logs = await DispenseLog.find({ hospitalId: user._id })
       .populate('medicineId', 'brandName genericName')
+      .populate('dispensedFrom.batchId', 'price')
       .sort({ dispensedAt: -1 })
       .lean();
 
-    return NextResponse.json({ logs }, { status: 200 });
+    const summary = logs.map((log) => {
+      const totalValue = log.dispensedFrom.reduce((sum, item) => {
+        const price = item.batchId?.price || 0;
+        return sum + (item.usedQuantity * price);
+      }, 0);
+
+      return {
+        _id: log._id,
+        medicine: log.medicineId,
+        quantity: log.quantity,
+        recipient: log.recipient,
+        dispensedAt: log.dispensedAt,
+      };
+    });
+
+    return NextResponse.json({ summary }, { status: 200 });
   } catch (error) {
-    console.error('[DISPENSE_LOG_FETCH_ERROR]', error);
-    return NextResponse.json({ error: 'Failed to fetch dispense logs' }, { status: 500 });
+    console.error('[DISPENSE_SUMMARY_FETCH_ERROR]', error);
+    return NextResponse.json({ error: 'Failed to fetch dispense summary' }, { status: 500 });
   }
 }
