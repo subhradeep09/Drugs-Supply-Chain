@@ -43,7 +43,7 @@ const sidebarItemsMap: Record<string, { title: string, href: string, icon: any }
     { title: 'Expiry Logs', href: '/dashboard/hospital/DrugExpiryLogs', icon: CalendarClock },
     { title: 'Feedback & Support', href: '/dashboard/hospital/FeedbackSupport', icon: MessageSquare },
     { title: 'Delivery Log', href: '/dashboard/hospital/DeliveryLog', icon: FileText },
-    { title: 'Settings', href: '/dashboard/hospital/Settings', icon: Settings },
+    { title: 'Dispense Logs', href: '/dashboard/hospital/dispenseLogs', icon: Settings },
     
   ],
   PHARMACY: [
