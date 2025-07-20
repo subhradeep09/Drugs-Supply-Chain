@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/db/mongodb';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/options';
+import dbConnect from '@/lib/db/mongodborder';
 import DispenseLog from '@/lib/models/dispenseLog';
 import Order from '@/lib/models/orderh';
 import { isSameDay } from 'date-fns';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?._id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
-    await connectDB();
+    await dbConnect();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -20,6 +27,7 @@ export async function GET() {
         $gte: today,
         $lt: tomorrow,
       },
+      hospitalId: session.user._id,
     }).lean();
 
     let todayTotalSold = 0;

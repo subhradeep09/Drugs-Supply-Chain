@@ -167,7 +167,7 @@ export default function HospitalDashboard() {
       setTodaySold(res.data.totalTodayValue || 0);
     });
 
-    axios.get("/api/pharmacy-daily-usage").then((res) => {
+    axios.get("/api/hospital-daily-usage").then((res) => {
       const data: DailyUsage[] = res.data;
       const today = new Date();
       const tenDaysAgo = new Date();

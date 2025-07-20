@@ -1,82 +1,77 @@
+
+
 'use client';
 
 import { useEffect, useState } from 'react';
 
-interface DispenseLog {
+interface DispenseSummaryItem {
   _id: string;
-  quantity: number;
-  dispensedAt: string;
-  recipient: string;
-  medicineId: {
+  medicine: {
     brandName: string;
-    genericName?: string;
+    genericName: string;
   };
+  quantity: number;
+  recipient: string;
+  value: number;
+  dispensedAt: string;
 }
 
-export default function DispenseLogsPage() {
-  const [logs, setLogs] = useState<DispenseLog[]>([]);
+export default function DispenseSummaryPage() {
+  const [summary, setSummary] = useState<DispenseSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLogs = async () => {
+    const fetchSummary = async () => {
       try {
         const res = await fetch('/api/hospital-dispense-logs');
         const data = await res.json();
-        setLogs(data.logs || []);
-      } catch (err) {
-        console.error('Failed to fetch logs', err);
+        setSummary(data.summary || []);
+      } catch (error) {
+        console.error('Error fetching dispense summary:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLogs();
+    fetchSummary();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">🧾 Dispense Logs</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">Dispense Summary</h1>
 
       {loading ? (
-        <p className="text-gray-500">Loading logs...</p>
-      ) : logs.length === 0 ? (
-        <p className="text-gray-600">No dispense logs available.</p>
+        <p>Loading...</p>
+      ) : summary.length === 0 ? (
+        <p>No records found.</p>
       ) : (
-        <div className="grid gap-6">
-          {logs.map((log) => (
-            <div
-              key={log._id}
-              className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 transition hover:shadow-lg"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <div className="text-xl font-semibold text-gray-800">
-                    {log.medicineId.brandName}
-                    <span className="text-sm text-gray-500 ml-2">
-                      ({log.medicineId.genericName || 'Generic'})
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Recipient:{' '}
-                    <span className="font-medium">{log.recipient}</span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Dispensed on:{' '}
-                    {new Date(log.dispensedAt).toLocaleString('en-IN', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-base text-gray-600">Total</span>
-                  <div className="text-2xl font-bold text-blue-700">
-                    {log.quantity} <span className="text-sm text-gray-500">units</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100 text-left">
+                <th className="px-4 py-2 border">#</th>
+                <th className="px-4 py-2 border">Brand</th>
+                <th className="px-4 py-2 border">Generic</th>
+                <th className="px-4 py-2 border">Quantity</th>
+                <th className="px-4 py-2 border">Recipient</th>
+                <th className="px-4 py-2 border">Dispensed At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.map((item, index) => (
+                <tr key={item._id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 border">{index + 1}</td>
+                  <td className="px-4 py-2 border">{item.medicine.brandName}</td>
+                  <td className="px-4 py-2 border">{item.medicine.genericName}</td>
+                  <td className="px-4 py-2 border">{item.quantity}</td>
+                  <td className="px-4 py-2 border">{item.recipient}</td>
+                  <td className="px-4 py-2 border">
+                    {new Date(item.dispensedAt).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
