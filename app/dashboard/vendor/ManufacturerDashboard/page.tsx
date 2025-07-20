@@ -318,7 +318,7 @@ const ManufacturerDashboardPage: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <div className="flex flex-1">
-        <main className="flex-1 overflow-y-auto bg-gray-50 pl-64 pt-8">
+        <main className="flex-1 overflow-y-auto bg-gray-50 pl-20 pt-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Manufacturer Dashboard</h1>
