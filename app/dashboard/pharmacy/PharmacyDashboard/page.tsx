@@ -37,8 +37,6 @@ import { PowerIcon} from '@heroicons/react/24/solid'; // Use solid icon for logo
 
 
 
-// ... (keep all your existing interfaces)
-
 interface Stat {
   medicineId: string;
   brandName: string;
