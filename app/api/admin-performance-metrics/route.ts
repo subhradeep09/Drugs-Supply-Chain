@@ -5,6 +5,7 @@ import PharmacyOrder from '@/lib/models/orderp';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 import Medicine from '@/lib/models/medicine';
 import {User} from '@/lib/models/User'; // Ensure this model exists
+import { Types } from 'mongoose';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,7 +36,10 @@ export async function GET(req: NextRequest) {
 
     // Get all medicineIds used in orders
     const medicineIds = allOrders.map(o => o.medicineId);
-    const medicines = await Medicine.find({ _id: { $in: medicineIds } }).select('_id userId medicineName').lean();
+    type LeanMedicine = { _id: string | Types.ObjectId; userId: string | Types.ObjectId };
+    const medicines = await Medicine.find({ _id: { $in: medicineIds } })
+      .select('_id userId medicineName')
+      .lean<LeanMedicine[]>();
 
     // Map medicineId to vendorId
     const medicineToVendor: Record<string, string> = {};
