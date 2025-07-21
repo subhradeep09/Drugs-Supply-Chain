@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
 
-    const alerts = [];
+    const alerts: any[] = [];
 
     // ✅ 1. Stock Alerts (stockQuantity = 0)
     const stockItems = await VendorInventory.find({ stockQuantity: 0 })

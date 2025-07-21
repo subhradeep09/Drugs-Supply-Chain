@@ -81,7 +81,6 @@
     "react-leaflet": "^4.2.1",
     "react-redux": "^9.1.0",
     "react-signature-canvas": "^1.1.0-alpha.2",
-    "react-ui-cards": "^3.1.0",
     "recharts": "^3.1.0",
     "resend": "^4.6.0",
     "stream-buffers": "^3.0.3",
