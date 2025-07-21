@@ -62,7 +62,10 @@ export async function GET(req: NextRequest) {
 
     // Fetch vendor names
     const vendorIds = topVendors.map(([id]) => id);
-    const vendors = await User.find({ _id: { $in: vendorIds } }).select('name _id').lean();
+    type LeanUser = { _id: string | Types.ObjectId; name?: string };
+    const vendors = await User.find({ _id: { $in: vendorIds } })
+      .select('name _id')
+      .lean<LeanUser[]>();
     const vendorIdToName = Object.fromEntries(vendors.map(v => [v._id.toString(), v.name || 'Unknown Vendor']));
 
     const vendorOrders = topVendors.map(([vendorId, count]) => ({
