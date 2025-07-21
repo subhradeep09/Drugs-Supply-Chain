@@ -41,7 +41,7 @@ const HeroVector = () => (
 
 const SectionIcon = ({ icon: Icon, color }: { icon: React.ComponentType<{ className?: string }>, color: string }) => (
   <div className="mb-4 flex items-center justify-center w-16 h-16 rounded-full" style={{ backgroundColor: `${color}15` }}>
-    <Icon className="w-8 h-8" style={{ color }} />
+    <Icon className="w-8 h-8" />
   </div>
 );
 
