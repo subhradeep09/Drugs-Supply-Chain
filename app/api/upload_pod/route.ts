@@ -5,7 +5,6 @@ import dbConnect from '@/lib/db/mongodborder';
 import Pod from '@/lib/models/pod';
 import Order from '@/lib/models/orderh';
 
-
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 import { User } from '@/lib/models/User';
 import { v2 as cloudinary } from 'cloudinary';
@@ -64,13 +63,15 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const stream = cloudinary.uploader.upload_stream(
-      { resource_type: 'raw', folder: 'pods', format: 'pdf' },
-      async (error, result) => {
-        if (error || !result) {
-          console.error('Cloudinary upload error:', error);
-          return NextResponse.json({ error: 'Cloudinary upload failed' }, { status: 500 });
-        }
+    const uploadResult: Response = await new Promise((resolve) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: 'raw', folder: 'pods', format: 'pdf' },
+        async (error, result) => {
+          if (error || !result) {
+            console.error('Cloudinary upload error:', error);
+            resolve(NextResponse.json({ error: 'Cloudinary upload failed' }, { status: 500 }));
+            return;
+          }
 
         try {
           const newPod = new Pod({
@@ -82,21 +83,16 @@ export async function POST(req: Request) {
           });
 
           await newPod.save();
-          return NextResponse.json({ message: 'POD uploaded successfully' }, { status: 200 });
-        } catch (saveErr) {
-          console.error('Mongoose Save Error:', saveErr);
-          return NextResponse.json({ error: 'Database save failed' }, { status: 500 });
+            resolve(NextResponse.json({ message: 'POD uploaded successfully' }, { status: 200 }));
+          } catch (saveErr) {
+            console.error('Mongoose Save Error:', saveErr);
+            resolve(NextResponse.json({ error: 'Database save failed' }, { status: 500 }));
+          }
         }
-      }
-    );
-
-    Readable.from(buffer).pipe(stream);
-
-    return new Promise((resolve) => {
-      stream.on('end', () => {
-        resolve(new Response('OK', { status: 200 }));
-      });
+      );
+      Readable.from(buffer).pipe(stream);
     });
+    return uploadResult;
   } catch (err) {
     console.error('Upload Error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
