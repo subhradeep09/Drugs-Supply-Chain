@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import dbConnect from '@/lib/db/mongodborder'
 import { User } from '@/lib/models/User'
-import { Verification } from '@/lib/models/Verification' // ✅ Make sure this model exists and is imported
+import { Verification } from '@/lib/models/Verification' 
 
 export const authOptions: NextAuthOptions = {
   providers: [
