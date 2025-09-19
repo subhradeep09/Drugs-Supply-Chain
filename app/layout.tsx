@@ -6,7 +6,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'DrugChain - Decentralized Drug Supply Chain',
+  title: 'Ayush Samparkh - Decentralized Drug Supply Chain',
   description: 'A blockchain-based drug supply chain and inventory management system for the Government of Delhi',
 }
 
