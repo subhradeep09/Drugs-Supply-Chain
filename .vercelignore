@@ -1,9 +1,9 @@
 # Ignore test files and folders
 /test
 /scripts
-/contracts
+
 /ignition
-/emails
+
 /prisma
 
 # Ignore build output and caches
