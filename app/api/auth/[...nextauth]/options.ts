@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
         token.isEmailVerified = user.isEmailVerified
         token.role = user.role
         token.name = user.name
-        token.applicationStatus = user.applicationStatus || null // ✅ set applicationStatus
+        token.applicationStatus = (user as any).applicationStatus || null // ✅ set applicationStatus
       } else {
         // On subsequent requests
         const freshUser = await User.findOne({ email: token.email })

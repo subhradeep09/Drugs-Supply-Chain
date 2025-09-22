@@ -90,7 +90,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error('Error in today sold value API:', error);
     return NextResponse.json(
-      { success: false, message: 'Server Error', error: error.message },
+      { success: false, message: 'Server Error', error: (error as Error).message },
       { status: 500 }
     );
   }

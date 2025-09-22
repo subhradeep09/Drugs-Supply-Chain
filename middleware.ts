@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
 
     const allowedRoles = protectedRoutes[matchedProtectedRoute];
     if (
-      !allowedRoles.includes(token.role) ||
+      !token.role || !allowedRoles.includes(token.role) ||
       token.applicationStatus !== "APPROVED"
     ) {
       return NextResponse.redirect(new URL("/application-status", request.url));

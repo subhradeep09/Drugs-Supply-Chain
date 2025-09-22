@@ -1,7 +1,7 @@
 import dbConnect from '@/lib/db/mongodborder';
 import DeliveryLocation from '@/lib/models/DeliveryLocation';
 
-export async function GET(req) {
+export async function GET(req: Request) {
   await dbConnect();
   const { searchParams } = new URL(req.url);
   const orderId = searchParams.get('orderId');

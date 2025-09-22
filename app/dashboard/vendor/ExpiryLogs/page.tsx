@@ -53,8 +53,8 @@ export default function ExpiryLogPage() {
           <tbody>
             {logs.map((entry) => (
               <tr key={entry._id} className="text-center">
-                <td className="p-2 border">{entry.medicine.brandName}</td>
-                <td className="p-2 border">{entry.medicine.genericName}</td>
+                <td className="p-2 border">{entry.brandName}</td>
+                <td className="p-2 border">{entry.genericName}</td>
                 <td className="p-2 border">{entry.batchNumber}</td>
                 <td className="p-2 border text-red-600">
                   {new Date(entry.expiryDate).toLocaleDateString()}

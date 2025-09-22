@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     // Filter only non-expired batches
     const today = new Date();
     const validBatches = inventory.batches
-      .filter((batch) => new Date(batch.expiryDate) >= today && batch.quantity > 0)
-      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()); // optional: use earliest expiry first
+      .filter((batch: any) => new Date(batch.expiryDate) >= today && batch.quantity > 0)
+      .sort((a: any, b: any) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()); // optional: use earliest expiry first
 
     let remaining = quantity;
     const updatedBatches = [];
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update total stock
-    inventory.totalStock = inventory.batches.reduce((sum, b) => sum + b.quantity, 0);
+    inventory.totalStock = inventory.batches.reduce((sum: number, b: any) => sum + b.quantity, 0);
     await inventory.save();
 
     // Save dispense log

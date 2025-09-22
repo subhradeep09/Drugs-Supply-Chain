@@ -2,7 +2,7 @@ import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import PharmacyOrder from '@/lib/models/orderp';
 
-export async function POST(request) {
+export async function POST(request: Request) {
   await dbConnect();
   const body = await request.json();
   const { orderId, orderType } = body;

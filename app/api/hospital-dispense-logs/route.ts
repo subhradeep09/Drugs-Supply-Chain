@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       .lean();
 
     const summary = logs.map((log) => {
-      const totalValue = log.dispensedFrom.reduce((sum, item) => {
+      const totalValue = log.dispensedFrom.reduce((sum: number, item: any) => {
         const price = item.batchId?.price || 0;
         return sum + (item.usedQuantity * price);
       }, 0);

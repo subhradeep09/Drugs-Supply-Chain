@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         const expiry = new Date(batch.expiryDate);
         if (expiry < new Date() && expiry > sixMonthsAgo) {
           expiredBatches.push({
-            _id: item._id.toString(),
+            _id: (item as any)._id.toString(),
             medicineName: item.medicineId?.brandName || 'Unknown',
             genericName: item.medicineId?.genericName || '',
             batchNumber: batch.batchNumber,

@@ -390,7 +390,7 @@ export default function HospitalDashboard() {
             <div className="mb-6">
               <div className="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
                 <span className="font-medium text-blue-600">Tip:</span>{" "}
-                {urgencyTips[urgencyLevel]}
+                {urgencyTips[urgencyLevel as keyof typeof urgencyTips]}
               </div>
 
               <div className="mb-5">
@@ -405,7 +405,7 @@ export default function HospitalDashboard() {
                   className="relative h-2 bg-gray-200 rounded-full cursor-pointer"
                 >
                   <div
-                    className={`absolute h-2 rounded-full ${urgencyColors[urgencyLevel]}`}
+                    className={`absolute h-2 rounded-full ${urgencyColors[urgencyLevel as keyof typeof urgencyColors]}`}
                     style={{
                       width: `${(sliderPos / 3) * 100}%`,
                       transition: "width 0.2s ease",

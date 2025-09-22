@@ -42,12 +42,12 @@ export default function ReceivedOrdersPage() {
 
         const taggedHospitalOrders = hospitalOrders.map((order) => ({
           ...order,
-          type: 'Hospital',
+          type: 'Hospital' as const,
         }));
 
         const taggedPharmacyOrders = pharmacyOrders.map((order) => ({
           ...order,
-          type: 'Pharmacy',
+          type: 'Pharmacy' as const,
         }));
 
         const combined = [...taggedHospitalOrders, ...taggedPharmacyOrders].sort(

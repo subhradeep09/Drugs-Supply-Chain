@@ -287,7 +287,7 @@ export default function UserVerificationRequests() {
                         {user.verification?.applicationStatus === "PENDING" && (
                           <div className="flex justify-end gap-2">
                             <Button
-                              variant="success"
+                              variant="default"
                               className="px-4 py-2 text-sm flex items-center gap-1"
                               onClick={() => updateStatus(user.verification!._id, "APPROVED")}
                               disabled={
@@ -456,7 +456,7 @@ export default function UserVerificationRequests() {
                         Close
                       </Button>
                       <Button
-                        variant="success"
+                        variant="default"
                         onClick={() => updateStatus(v._id, "APPROVED")}
                         disabled={
                           !verifiedDocs[v._id]?.idProof ||

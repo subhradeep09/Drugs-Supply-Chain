@@ -30,7 +30,7 @@ export async function GET() {
           .sort({ orderDate: -1 })
           .lean();
 
-        const price = Number(latestOrder?.price) || 0;
+        const price = Number((latestOrder as any)?.price) || 0;
 
         // Calculate total sold quantity for this medicine — filter by pharmacyId (same as hospitalId)
         const soldLogs = await PharmacySoldLog.aggregate([

@@ -63,7 +63,7 @@ export default function UserManagementPage() {
 
         const enriched = data.map(user => ({
           ...user,
-          status: new Date(user.updatedAt) >= twentyFourHoursAgo ? 'active' : 'inactive',
+          status: (new Date(user.updatedAt) >= twentyFourHoursAgo ? 'active' : 'inactive') as 'active' | 'inactive',
         }))
 
         setUsers(enriched)
@@ -271,7 +271,7 @@ export default function UserManagementPage() {
                             user.role === 'ADMIN'
                               ? 'default'
                               : ['HOSPITAL', 'PHARMACY', 'VENDOR'].includes(user.role)
-                              ? 'info'
+                              ? 'secondary'
                               : 'outline'
                           }
                           className="gap-1"

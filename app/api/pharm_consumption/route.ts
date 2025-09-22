@@ -68,7 +68,7 @@ export async function GET() {
 
     // Build response array
     const stats = medicineDocs.map((med) => {
-      const key = med._id.toString();
+      const key = (med as any)._id.toString();
       const data = medicineMap.get(key);
       return {
         medicineId: key,

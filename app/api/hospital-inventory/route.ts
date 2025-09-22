@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
         (batch: any) => new Date(batch.expiryDate) >= now
       );
 
-      const nonExpiredStock = validBatches.reduce((sum: number, b:number) => sum + b.quantity, 0);
+      const nonExpiredStock = validBatches.reduce((sum: number, b: any) => sum + b.quantity, 0);
 
       return {
-        inventoryId: item._id.toString(),
+        inventoryId: (item as any)._id.toString(),
         medicineId: item.medicineId?._id?.toString() || '',
         medicineName: item.medicineId?.brandName || 'Unknown',
         totalStock: nonExpiredStock, // calculated live

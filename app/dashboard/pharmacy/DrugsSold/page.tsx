@@ -112,7 +112,7 @@ export default function PharmacySoldPage() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.accessToken}` 
+          'Authorization': `Bearer ${(session as any)?.accessToken}` 
         },
         body: JSON.stringify({
           medicineId: selectedMedicineId,

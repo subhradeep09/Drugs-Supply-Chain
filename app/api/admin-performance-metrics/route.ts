@@ -9,7 +9,7 @@ import { Types } from 'mongoose';
 
 export async function GET(req: NextRequest) {
   try {
-    await dbConnect();git
+    await dbConnect();
 
     const filter = req.nextUrl.searchParams.get('filter') || 'monthly';
     const { start, end } = getDateRange(filter);

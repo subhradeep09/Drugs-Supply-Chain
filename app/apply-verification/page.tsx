@@ -41,7 +41,11 @@ export default function ApplyVerificationPage() {
     addressProofFile: null,
   });
 
-  const [uploadedFiles, setUploadedFiles] = useState({
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    idProofFile: File | null;
+    licenseCertificateFile: File | null;
+    addressProofFile: File | null;
+  }>({
     idProofFile: null,
     licenseCertificateFile: null,
     addressProofFile: null,
@@ -85,12 +89,12 @@ export default function ApplyVerificationPage() {
     checkStatus();
   }, [session, status, router]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     if (files && files[0]) {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
@@ -98,16 +102,17 @@ export default function ApplyVerificationPage() {
     }
   };
 
-  const removeFile = (name) => {
+  const removeFile = (name: string) => {
     setFormData((prev) => ({ ...prev, [name]: null }));
     setUploadedFiles((prev) => ({ ...prev, [name]: null }));
-    document.getElementById(name).value = "";
+    const element = document.getElementById(name) as HTMLInputElement;
+    if (element) element.value = "";
   };
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setStatusMsg("");
@@ -130,8 +135,15 @@ export default function ApplyVerificationPage() {
     }
   };
 
-  const renderFileUpload = (name, label, required = true) => {
-    const file = uploadedFiles[name];
+  const handleButtonSubmit = () => {
+    const form = document.querySelector('form') as HTMLFormElement;
+    if (form) {
+      form.requestSubmit();
+    }
+  };
+
+  const renderFileUpload = (name: string, label: string, required = true) => {
+    const file = uploadedFiles[name as keyof typeof uploadedFiles];
     return (
       <div className="space-y-2">
         <Label className="text-gray-700 dark:text-gray-300 font-medium">
@@ -175,7 +187,7 @@ export default function ApplyVerificationPage() {
       </div>
     );
 
-    const rightPanel = (content, title) => (
+    const rightPanel = (content: React.ReactNode, title: string) => (
       <div className="p-6 sm:p-10 space-y-8 bg-gradient-to-br from-white via-indigo-50 to-purple-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h3>
 
@@ -322,7 +334,7 @@ export default function ApplyVerificationPage() {
                     Next <ChevronRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2">
+                  <Button onClick={handleButtonSubmit} disabled={loading} className="flex items-center gap-2">
                     {loading ? (
                       <>
                         <Loader2 className="animate-spin h-4 w-4" /> Submitting...

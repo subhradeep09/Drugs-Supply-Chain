@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import PharmacyOrder from '@/lib/models/orderp';  // Notice: using PharmacyOrder model now
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const { orderId, newStatus } = await req.json();
 
