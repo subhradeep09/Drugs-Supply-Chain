@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import ConnectWallet from '@/app/components/ConnectWallet/page'; 
 
 // Import ABI with explicit typing
-import DeliveredOrdersABI from '../../../../contracts/DeliveredOrders.json'; 
+import DeliveredOrdersABI from '../../../../contracts/DeliveredOrders.json';
 
 interface Order {
   _id: string;
