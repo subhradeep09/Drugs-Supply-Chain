@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
-import DeliveredOrdersABI from '@/contracts/DeliveredOrders.json';
 import ConnectWallet from '@/app/components/ConnectWallet/page'; 
+
+// Import ABI with explicit typing
+import DeliveredOrdersABI from '../../../../contracts/DeliveredOrders.json'; 
 
 interface Order {
   _id: string;
