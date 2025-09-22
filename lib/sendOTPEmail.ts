@@ -1,6 +1,6 @@
 // /lib/sendOTPEmail.ts
 import { resend } from "@/lib/resend";
-import VerificationEmail from "../emails/VerificationEmail";
+import VerificationEmail from "@/emails/VerificationEmail";
 
 export async function sendOTPEmail(
     email: string,
