@@ -44,7 +44,7 @@ export async function GET(
 
     const quantity = order.quantity || 0;
     const totalPrice = order.dispatchedBatches?.reduce(
-      (sum, b) => sum + b.price * b.quantity,
+      (sum: number, b: any) => sum + b.price * b.quantity,
       0
     ) || 0;
 

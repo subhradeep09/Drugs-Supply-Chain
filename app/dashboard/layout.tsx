@@ -24,7 +24,7 @@ export default function DashboardLayout({
     const verifyAccess = async () => {
       if (status === 'loading') return
 
-      if (!session || status === 'unauthenticated') {
+      if (!session) {
         router.push('/sign-in')
         return
       }

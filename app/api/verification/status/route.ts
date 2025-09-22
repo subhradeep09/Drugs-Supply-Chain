@@ -52,9 +52,9 @@ export async function GET() {
       licenseCertificateUrl: verificationData.licenseCertificateUrl,
       addressProofUrl: verificationData.addressProofUrl || null,
       submittedAt: verificationData.submittedAt.toISOString(),
-      reviewedAt: verificationData.reviewedAt?.toISOString() || null,
-      createdAt: verificationData.createdAt.toISOString(),
-      updatedAt: verificationData.updatedAt.toISOString()
+      reviewedAt: (verificationData as any).reviewedAt?.toISOString() || null,
+      createdAt: (verificationData as any).createdAt.toISOString(),
+      updatedAt: (verificationData as any).updatedAt.toISOString()
     }
 
     return new Response(

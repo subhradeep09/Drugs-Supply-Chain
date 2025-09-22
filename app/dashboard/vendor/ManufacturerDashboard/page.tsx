@@ -52,14 +52,14 @@ const ManufacturerDashboardPage: React.FC = () => {
           }
         },
         tooltip: {
-          trigger: 'axis'
+          trigger: 'axis' as const
         },
         xAxis: {
-          type: 'category',
+          type: 'category' as const,
           data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
         },
         yAxis: {
-          type: 'value',
+          type: 'value' as const,
           name: 'Days'
         },
         series: [{
@@ -88,10 +88,10 @@ const ManufacturerDashboardPage: React.FC = () => {
           }
         },
         tooltip: {
-          trigger: 'item'
+          trigger: 'item' as const
         },
         legend: {
-          orient: 'vertical',
+          orient: 'vertical' as const,
           left: 'left',
           top: 'middle'
         },

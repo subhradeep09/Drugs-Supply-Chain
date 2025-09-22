@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export default function PharmacySoldPage() {
-  const [medicines, setMedicines] = useState([]);
+  const [medicines, setMedicines] = useState<any[]>([]);
   const [selectedMedicineId, setSelectedMedicineId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [loading, setLoading] = useState(false);

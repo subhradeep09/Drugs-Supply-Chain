@@ -21,7 +21,7 @@ export default function ConnectWallet() {
 
   useEffect(() => {
     if (typeof window.ethereum !== 'undefined') {
-      window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
+      window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
         if (accounts.length > 0) {
           setAccount(accounts[0]);
         }

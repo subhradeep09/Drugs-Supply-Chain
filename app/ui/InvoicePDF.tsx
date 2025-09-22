@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   table: {
-    display: 'table',
+    // display: 'table',
     width: 'auto',
     marginTop: 10,
     borderRadius: 6,

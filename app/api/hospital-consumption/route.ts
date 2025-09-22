@@ -25,10 +25,10 @@ export async function GET(req: NextRequest) {
 
     const filtered = inventories.map((inv) => {
       // Filter out expired batches
-      const validBatches = inv.batches.filter((batch) => new Date(batch.expiryDate) > now);
+      const validBatches = inv.batches.filter((batch: any) => new Date(batch.expiryDate) > now);
 
       // Calculate totalStock from valid batches
-      const currentStock = validBatches.reduce((sum, batch) => sum + batch.quantity, 0);
+      const currentStock = validBatches.reduce((sum: number, batch: any) => sum + batch.quantity, 0);
 
       return {
         medicineId: inv.medicineId._id,

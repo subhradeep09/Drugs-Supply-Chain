@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
 import { Parser } from 'json2csv';
 import PDFDocument from 'pdfkit';
-import getStream from 'get-stream'; // Make sure to install: npm install get-stream
 
 export async function GET(req: Request) {
   await dbConnect();
@@ -109,7 +108,7 @@ export async function GET(req: Request) {
         key,
         width: 25,
       }));
-      data.forEach((row) => sheet.addRow(row));
+      data.forEach((row: any) => sheet.addRow(row));
     }
     const buffer = await workbook.xlsx.writeBuffer();
     return new Response(buffer, {
@@ -135,9 +134,14 @@ export async function GET(req: Request) {
     });
 
     doc.end();
-    const buffer = await getStream.buffer(doc);
+    
+    const chunks: Buffer[] = [];
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    const buffer = await new Promise<Buffer>((resolve) => {
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+    });
 
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}.pdf"`,

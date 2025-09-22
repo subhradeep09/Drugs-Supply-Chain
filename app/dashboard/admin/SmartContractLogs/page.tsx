@@ -69,7 +69,7 @@ export default function SmartContractLogs() {
         const logs = await contract.queryFilter('OrderDelivered')
 
         const parsedLogs: DeliveredOrder[] = logs.map((log) => {
-          const args = log.args
+          const args = (log as any).args
           return {
             orderId: args.orderId,
             hospitalName: args.hospitalName,
