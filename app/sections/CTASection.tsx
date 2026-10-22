@@ -70,8 +70,8 @@ export function CTASection() {
           </h2>
           
           <p className="text-xl text-gray-600 leading-relaxed">
-            Join thousands of healthcare providers, manufacturers, and distributors 
-            who trust our platform for secure pharmaceutical supply chain management.
+            Join healthcare providers, manufacturers, and logistics partners 
+            evaluating our blockchain prototype for secure pharmaceutical supply chain management.
           </p>
         </div>
 

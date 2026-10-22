@@ -69,25 +69,25 @@ const integrations = [
     name: 'Government Systems',
     description: 'Delhi Health Department integration',
     status: 'Active',
-    connections: '25+ Systems'
+    connections: '2+ Pilot Systems'
   },
   {
     name: 'Hospital Networks',
     description: 'Major healthcare provider connections',
     status: 'Active',
-    connections: '500+ Hospitals'
+    connections: '5+ Pilot Hospitals'
   },
   {
     name: 'Pharmacy Chains',
     description: 'Retail pharmacy integrations',
     status: 'Active',
-    connections: '2000+ Stores'
+    connections: '10+ Pilot Pharmacies'
   },
   {
     name: 'Distribution Partners',
     description: 'Logistics and supply partners',
     status: 'Active',
-    connections: '100+ Partners'
+    connections: '4+ Pilot Nodes'
   }
 ]
 
@@ -156,19 +156,19 @@ export function TechnologyStack() {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center p-6 bg-white rounded-2xl border border-gray-200 group hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-black text-blue-600 mb-2 group-hover:scale-110 transition-transform">50K+</div>
-              <div className="text-sm font-semibold text-gray-700">Transactions/Second</div>
+              <div className="text-3xl font-black text-blue-600 mb-2 group-hover:scale-110 transition-transform">50+</div>
+              <div className="text-sm font-semibold text-gray-700">Daily Transactions</div>
             </div>
             <div className="text-center p-6 bg-white rounded-2xl border border-gray-200 group hover:shadow-lg transition-shadow">
               <div className="text-3xl font-black text-emerald-600 mb-2 group-hover:scale-110 transition-transform">&lt; 100ms</div>
               <div className="text-sm font-semibold text-gray-700">API Response Time</div>
             </div>
             <div className="text-center p-6 bg-white rounded-2xl border border-gray-200 group hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-black text-purple-600 mb-2 group-hover:scale-110 transition-transform">10M+</div>
-              <div className="text-sm font-semibold text-gray-700">Data Points/Day</div>
+              <div className="text-3xl font-black text-purple-600 mb-2 group-hover:scale-110 transition-transform">1,500+</div>
+              <div className="text-sm font-semibold text-gray-700">Verified Records</div>
             </div>
             <div className="text-center p-6 bg-white rounded-2xl border border-gray-200 group hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-black text-orange-600 mb-2 group-hover:scale-110 transition-transform">99.99%</div>
+              <div className="text-3xl font-black text-orange-600 mb-2 group-hover:scale-110 transition-transform">99.9%</div>
               <div className="text-sm font-semibold text-gray-700">System Uptime</div>
             </div>
           </div>

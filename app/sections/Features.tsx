@@ -126,21 +126,21 @@ export function Features() {
           <div className="grid lg:grid-cols-3 gap-12 items-center">
             <div className="lg:col-span-2 space-y-6">
               <h3 className="text-3xl font-light text-gray-900">
-                <span className="font-black">Trusted by</span> Healthcare Leaders
+                <span className="font-black">Validated in</span> Pilot Healthcare Centers
               </h3>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Our platform is actively used by major hospitals, pharmaceutical companies, 
-                and government healthcare departments across Delhi, ensuring the highest 
+                Our prototype platform is actively tested across pilot hospitals, pharmaceutical manufacturers, 
+                and government healthcare checkpoints in Delhi, verifying the highest 
                 standards of drug safety and supply chain integrity.
               </p>
               <div className="flex items-center gap-8 pt-4">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">500+</div>
-                  <div className="text-sm text-gray-500">Healthcare Partners</div>
+                  <div className="text-2xl font-bold text-gray-900">5+</div>
+                  <div className="text-sm text-gray-500">Pilot Healthcare Partners</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">2M+</div>
-                  <div className="text-sm text-gray-500">Drugs Tracked Daily</div>
+                  <div className="text-2xl font-bold text-gray-900">1,200+</div>
+                  <div className="text-sm text-gray-500">Pilot Drugs Tracked</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">99.9%</div>

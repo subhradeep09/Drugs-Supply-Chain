@@ -17,24 +17,24 @@ import Footer from '@/app/ui/Footer'
 const contactMethods = [
   {
     title: 'Phone Support',
-    value: '+91-11-2345-6789',
-    description: '24/7 technical assistance',
+    value: '+91 11-2460-0216',
+    description: 'Mon-Fri, 9:00 AM - 6:00 PM IST',
     icon: PhoneIcon,
     color: 'blue',
     action: 'Call Now'
   },
   {
     title: 'Email Support',
-    value: 'support@delhiayushsamparkh.gov.in',
-    description: 'Response within 2 hours',
+    value: 'ayushsampark2025@gmail.com',
+    description: 'Response within 2-4 hours',
     icon: EnvelopeIcon,
     color: 'emerald',
     action: 'Send Email'
   },
   {
     title: 'Live Chat',
-    value: 'Available 24/7',
-    description: 'Instant support chat',
+    value: 'Mon - Sat (9AM - 6PM)',
+    description: 'Pilot support desk',
     icon: ChatBubbleLeftRightIcon,
     color: 'purple',
     action: 'Start Chat'
@@ -96,22 +96,22 @@ export default function ContactPage() {
             </h1>
             
             <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-12">
-              Have questions about our blockchain platform? Need technical support? 
-              Want to discuss partnership opportunities? Our team is ready to assist you 24/7.
+              Have questions about our blockchain prototype? Need technical support? 
+              Want to discuss pilot partnership opportunities? Our team is ready to assist you.
             </p>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div className="text-center">
-                <div className="text-3xl font-black text-blue-600 mb-2">&lt; 12hr</div>
+                <div className="text-3xl font-black text-blue-600 mb-2">&lt; 2hr</div>
                 <div className="text-sm font-medium text-gray-600">Response Time</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black text-emerald-600 mb-2">24/7</div>
-                <div className="text-sm font-medium text-gray-600">Support Available</div>
+                <div className="text-3xl font-black text-emerald-600 mb-2">99.9%</div>
+                <div className="text-sm font-medium text-gray-600">Platform Uptime</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black text-purple-600 mb-2">500+</div>
-                <div className="text-sm font-medium text-gray-600">Happy Partners</div>
+                <div className="text-3xl font-black text-purple-600 mb-2">5+</div>
+                <div className="text-sm font-medium text-gray-600">Pilot Partners</div>
               </div>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function ContactPage() {
               </h2>
               
               <p className="text-xl text-gray-600 leading-relaxed text-center max-w-3xl mx-auto">
-                Fill out the form below and we'll get back to you within 2 hours during business hours.
+                Fill out the form below and our pilot team will get back to you within 2 to 4 hours during business hours.
               </p>
             </div>
             

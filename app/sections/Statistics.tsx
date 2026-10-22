@@ -12,44 +12,44 @@ import {
 
 const stats = [
   {
-    value: '2.5M+',
+    value: '1,200+',
     label: 'Drugs Tracked',
-    description: 'Daily pharmaceutical units monitored',
+    description: 'Pilot test units monitored across nodes',
     icon: ArrowTrendingUpIcon,
     color: 'blue'
   },
   {
-    value: '500+',
+    value: '5+',
     label: 'Healthcare Partners',
-    description: 'Hospitals and clinics connected',
+    description: 'Pilot hospitals and clinics connected',
     icon: UsersIcon,
     color: 'emerald'
   },
   {
-    value: '99.99%',
-    label: 'Security Rate',
-    description: 'Zero counterfeit drugs detected',
+    value: '100%',
+    label: 'Verification Rate',
+    description: 'Zero counterfeit drugs detected in pilot',
     icon: ShieldCheckIcon,
     color: 'purple'
   },
   {
     value: '24/7',
     label: 'Monitoring',
-    description: 'Continuous system surveillance',
+    description: 'Continuous pilot system surveillance',
     icon: ClockIcon,
     color: 'orange'
   },
   {
-    value: '100+',
+    value: '4+',
     label: 'Distributors',
-    description: 'Logistics partners in network',
+    description: 'Pilot logistics partners in network',
     icon: TruckIcon,
     color: 'teal'
   },
   {
-    value: '15M+',
-    label: 'Citizens Protected',
-    description: 'Delhi residents benefiting',
+    value: '1,500+',
+    label: 'Beneficiaries Served',
+    description: 'Patients covered across pilot facilities',
     icon: BuildingOfficeIcon,
     color: 'rose'
   }
@@ -72,18 +72,18 @@ export function Statistics() {
         <div className="text-center mb-20 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2 border border-gray-200 mb-6">
             <ArrowTrendingUpIcon className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-600">Real-time Impact</span>
+            <span className="text-sm font-medium text-gray-600">Pilot Testbed Impact</span>
           </div>
           
           <h2 className="text-4xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight">
             <span className="font-black">Measurable Results</span>
             <br />
-            <span className="text-gray-500">Across Delhi Healthcare</span>
+            <span className="text-gray-500">Across Delhi Healthcare Pilot</span>
           </h2>
           
           <p className="text-xl text-gray-600 leading-relaxed">
-            Our platform delivers tangible improvements in pharmaceutical distribution, 
-            safety, and efficiency across the entire healthcare ecosystem.
+            Our prototype platform delivers verified improvements in pharmaceutical distribution, 
+            safety, and efficiency across pilot healthcare facilities.
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export function Statistics() {
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
                   <div>
                     <div className="text-sm font-medium text-gray-700">Counterfeit Drug Prevention</div>
-                    <div className="text-xs text-gray-500 mt-1">Complete elimination rate</div>
+                    <div className="text-xs text-gray-500 mt-1">Complete elimination in pilot testing</div>
                   </div>
                   <div className="text-2xl font-black text-emerald-600">100%</div>
                 </div>
@@ -137,7 +137,7 @@ export function Statistics() {
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
                   <div>
                     <div className="text-sm font-medium text-gray-700">Delivery Time Reduction</div>
-                    <div className="text-xs text-gray-500 mt-1">Average improvement</div>
+                    <div className="text-xs text-gray-500 mt-1">Average turnaround improvement</div>
                   </div>
                   <div className="text-2xl font-black text-blue-600">45%</div>
                 </div>
@@ -145,18 +145,18 @@ export function Statistics() {
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
                   <div>
                     <div className="text-sm font-medium text-gray-700">Cost Savings</div>
-                    <div className="text-xs text-gray-500 mt-1">Annual government savings</div>
+                    <div className="text-xs text-gray-500 mt-1">Estimated pilot operational savings</div>
                   </div>
-                  <div className="text-2xl font-black text-purple-600">₹250M</div>
+                  <div className="text-2xl font-black text-purple-600">₹1.5L+</div>
                 </div>
               </div>
             </div>
             
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-8 border border-gray-200 text-center">
-                <div className="text-5xl font-black text-gray-900 mb-3">98.7%</div>
+                <div className="text-5xl font-black text-gray-900 mb-3">98%</div>
                 <div className="text-lg font-bold text-gray-700 mb-2">Patient Satisfaction</div>
-                <div className="text-gray-600 text-sm">Based on healthcare provider feedback</div>
+                <div className="text-gray-600 text-sm">Based on pilot healthcare feedback</div>
                 
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <div className="flex items-center justify-between text-sm">

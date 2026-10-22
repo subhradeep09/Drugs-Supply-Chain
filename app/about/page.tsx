@@ -73,23 +73,23 @@ export default function AboutPage() {
             </h1>
             
             <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-12">
-              Ayush Samparkh is a comprehensive blockchain-enabled platform ensuring secure, transparent, 
+              Ayush Samparkh is a comprehensive blockchain-enabled prototype platform ensuring secure, transparent, 
               and efficient pharmaceutical distribution. We're committed to safeguarding medicine 
-              integrity from manufacturer to patient across Delhi and beyond.
+              integrity from manufacturer to patient across Delhi pilot centers.
             </p>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div className="text-center">
-                <div className="text-3xl font-black text-blue-600 mb-2">2023</div>
-                <div className="text-sm font-medium text-gray-600">Founded</div>
+                <div className="text-3xl font-black text-blue-600 mb-2">2024</div>
+                <div className="text-sm font-medium text-gray-600">Pilot Launch</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black text-emerald-600 mb-2">500+</div>
-                <div className="text-sm font-medium text-gray-600">Partners</div>
+                <div className="text-3xl font-black text-emerald-600 mb-2">5+</div>
+                <div className="text-sm font-medium text-gray-600">Pilot Partners</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black text-purple-600 mb-2">15M+</div>
-                <div className="text-sm font-medium text-gray-600">Lives Protected</div>
+                <div className="text-3xl font-black text-purple-600 mb-2">1,500+</div>
+                <div className="text-sm font-medium text-gray-600">Beneficiaries Covered</div>
               </div>
             </div>
           </div>
@@ -117,18 +117,18 @@ export default function AboutPage() {
                 
                 <div className="space-y-6">
                   <p className="text-lg text-gray-600 leading-relaxed">
-                    Founded in 2023, Ayush Samparkh emerged from a critical need to address counterfeit drugs, 
+                    Initiated as a flagship innovation project, Ayush Samparkh addresses counterfeit drugs, 
                     supply inefficiencies, and transparency gaps in India's pharmaceutical ecosystem.
                   </p>
                   
                   <p className="text-lg text-gray-600 leading-relaxed">
-                    Our founding team of healthcare professionals, blockchain developers, and policy experts 
-                    witnessed firsthand how these challenges endangered patient safety and public health.
+                    Our team of healthcare professionals, blockchain developers, and researchers 
+                    designed this prototype system to establish verifiable, tamper-evident drug tracking.
                   </p>
                   
                   <p className="text-lg text-gray-600 leading-relaxed">
-                    Today, we partner with government agencies, hospitals, pharmacies, and manufacturers 
-                    to ensure every medicine is tracked, verified, and delivered safely to those who need it most.
+                    Currently in pilot testing, the platform connects pilot healthcare facilities, pharmacies, 
+                    and manufacturers to demonstrate real-time blockchain tracking and automated compliance.
                   </p>
                 </div>
               </div>
