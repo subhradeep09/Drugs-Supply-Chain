@@ -4,6 +4,9 @@ import dbConnect from "@/lib/db/mongodborder";
 import { User } from "@/lib/models/User";
 import { sendOTPEmail } from "@/lib/sendOTPEmail";
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: Request) {
   await dbConnect();
 

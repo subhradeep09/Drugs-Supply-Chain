@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import Pod from '@/lib/models/pod';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     await dbConnect();

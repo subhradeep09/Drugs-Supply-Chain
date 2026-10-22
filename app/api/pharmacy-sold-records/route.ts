@@ -5,6 +5,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: Request) {
   await dbConnect();
 

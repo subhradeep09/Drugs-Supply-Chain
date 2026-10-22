@@ -8,6 +8,9 @@ import Medicine from '@/lib/models/medicine';
 import { User } from '@/lib/models/User';
 import mongoose from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   await dbConnect();
 

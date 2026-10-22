@@ -4,6 +4,9 @@ import PharmacyOrder from '@/lib/models/orderp';
 import Medicine from '@/lib/models/medicine';
 import {User} from '@/lib/models/User';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);

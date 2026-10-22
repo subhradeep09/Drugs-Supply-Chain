@@ -8,6 +8,9 @@ import ExcelJS from 'exceljs';
 import { Parser } from 'json2csv';
 import PDFDocument from 'pdfkit';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   await dbConnect();
 

@@ -2,6 +2,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import PharmacyOrder from '@/lib/models/orderp';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: Request) {
   await dbConnect();
   const body = await request.json();

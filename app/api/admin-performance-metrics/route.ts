@@ -7,6 +7,9 @@ import Medicine from '@/lib/models/medicine';
 import {User} from '@/lib/models/User'; // Ensure this model exists
 import { Types } from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();

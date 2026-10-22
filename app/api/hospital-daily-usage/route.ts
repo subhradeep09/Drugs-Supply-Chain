@@ -6,6 +6,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import DispenseLog from '@/lib/models/dispenseLog';
 import Medicine from '@/lib/models/medicine';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);

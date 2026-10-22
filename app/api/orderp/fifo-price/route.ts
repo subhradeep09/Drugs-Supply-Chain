@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: NextRequest) {
   await dbConnect();
 

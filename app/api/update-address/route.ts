@@ -1,6 +1,9 @@
 import dbConnect from '@/lib/db/mongodborder';
 import DeliveryLocation from '@/lib/models/DeliveryLocation';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: Request) {
   await dbConnect();
   const { orderId, address } = await req.json();

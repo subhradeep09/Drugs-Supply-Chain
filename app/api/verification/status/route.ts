@@ -5,6 +5,9 @@ import dbConnect from '@/lib/db/mongodborder'
 import { Verification } from '@/lib/models/Verification'
 import type { IVerification } from '@/lib/models/Verification'
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)

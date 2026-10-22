@@ -3,6 +3,9 @@ import connectDB from '@/lib/db/mongodb'
 import Medicine from '@/lib/models/medicine'
 import { Types } from 'mongoose'
 
+export const dynamic = 'force-dynamic';
+
+
 // GET: List/search drugs with pagination and filters
 export async function GET(request: NextRequest) {
   await connectDB()

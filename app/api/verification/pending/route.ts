@@ -3,6 +3,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import { Verification } from '@/lib/models/Verification';
 import { User } from '@/lib/models/User';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   await dbConnect();
 

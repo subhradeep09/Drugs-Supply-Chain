@@ -6,6 +6,9 @@ import PharmacyInventory from '@/lib/models/Pharmacy-Inventory';
 import PharmacyOrder from '@/lib/models/orderp';
 import PharmacySoldLog from '@/lib/models/Pharmacy-Sold';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic';
+
+
 // Mock orders database - replace with actual database
 let mockOrders = [
   {

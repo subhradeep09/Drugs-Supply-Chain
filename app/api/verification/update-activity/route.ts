@@ -3,6 +3,9 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 import dbConnect from '@/lib/db/mongodborder'
 import { User } from '@/lib/models/User'
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST() {
   try {
     const session = await getServerSession(authOptions)

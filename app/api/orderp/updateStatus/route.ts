@@ -2,6 +2,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import PharmacyOrder from '@/lib/models/orderp';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: NextRequest) {
   await dbConnect();
   const { orderId, status } = await req.json();

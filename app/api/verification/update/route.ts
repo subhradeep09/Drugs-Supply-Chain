@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder';
 import { Verification } from '@/lib/models/Verification';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: Request) {
   await dbConnect();
 

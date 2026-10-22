@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodborder'; // your db connection utility
 import Order from '@/lib/models/orderh'; // your mongoose order model
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: Request) {
   try {
     const { orderId, newStatus } = await req.json();

@@ -4,6 +4,9 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import dbConnect from '@/lib/db/mongodborder';
 import VendorInventory from '@/lib/models/Vendor-Inventory';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

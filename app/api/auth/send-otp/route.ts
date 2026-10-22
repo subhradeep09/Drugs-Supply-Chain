@@ -4,6 +4,9 @@ import {User} from '@/lib/models/User';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 
+export const dynamic = 'force-dynamic';
+
+
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }

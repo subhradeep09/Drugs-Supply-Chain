@@ -5,6 +5,9 @@ import VendorInventory from '@/lib/models/Vendor-Inventory';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();

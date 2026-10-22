@@ -5,6 +5,9 @@ import dbConnect from '@/lib/db/mongodborder';
 import Order from '@/lib/models/orderh';
 import HospitalInventory from '@/lib/models/Hospital-Inventory';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);

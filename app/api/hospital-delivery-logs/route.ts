@@ -5,6 +5,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import mongoose from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);

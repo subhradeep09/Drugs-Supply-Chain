@@ -8,6 +8,9 @@ import PharmacyOrder from '@/lib/models/orderp';
 import Medicine from '@/lib/models/medicine';
 import { User } from '@/lib/models/User';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

@@ -6,6 +6,9 @@ import Medicine from '@/lib/models/medicine';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);

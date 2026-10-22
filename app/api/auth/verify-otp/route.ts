@@ -1,6 +1,9 @@
 import dbConnect from "@/lib/db/mongodborder";
 import {User} from "@/lib/models/User";
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: Request) {
   // Connect to the database
   await dbConnect();

@@ -6,6 +6,9 @@ import DispenseLog from '@/lib/models/dispenseLog';
 import Order from '@/lib/models/orderh';
 import { isSameDay } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 

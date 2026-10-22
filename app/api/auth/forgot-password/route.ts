@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
+export const dynamic = 'force-dynamic';
+
+
 // Mock user database - replace with actual database
 const mockUsers = [
   {
